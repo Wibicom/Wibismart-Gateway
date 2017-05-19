@@ -46,12 +46,12 @@ var onValue = new Buffer(1);
 onValue.writeUInt8(0x01, 0);
 
 var mqttConfig = {
-    "org" : "rjpoaa",
+    "org" : "4rxa4d",
     "id" : "506583dd5c62",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "fooBTWcowC16h(4kwx"
+    "auth-token" : "rGpBk2iF?tMG*PSznn"
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
@@ -82,7 +82,7 @@ noble.on('discover', function(peripheral) {
 //  console.log('[BLE] found peripheral:\n' + peripheral + '\n\n\n\n\n');
   // Check if peripheral contains 'Enviro' in its name
   if(peripheral.address == 'b0:b4:48:e4:9c:80' || (peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1)) {
-  	//console.log('[BLE] Connecting to peripheral:', peripheral.advertisement['localName'], " with address : ", peripheral.address, ' ...');
+  	console.log('[BLE] Connecting to peripheral:', peripheral.advertisement['localName'], " with address : ", peripheral.address, ' ...');
   	// we found a enviro, stop scanning
   	//noble.stopScanning();
 

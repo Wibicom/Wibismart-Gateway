@@ -96,8 +96,11 @@ noble.on('discover', function(peripheral) {
 
 function connectToEnviro(peripheral) {
   peripheral.connect(function(err) {
-      console.log("[BLE] Connected");
+      //**Start scanning for more Enviros
+      noble.startScanning();
 
+      console.log("[BLE] Connected");
+      
       peripheral.once('disconnect', function() {
         // handle the disconnection event of the peripheral
         console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");

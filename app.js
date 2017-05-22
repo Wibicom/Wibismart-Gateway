@@ -63,7 +63,8 @@ noble.on('stateChange', function(state) {
   	deviceClient.connect();
   }
   else {
-    //noble.stopScanning();
+    console.log("Stop scanning");
+    noble.stopScanning();
   }
 })
 

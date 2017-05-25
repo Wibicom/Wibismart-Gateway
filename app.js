@@ -16,6 +16,7 @@ var Client = require('ibmiotf');
 var weatherServiceUuid = 'aa40';
 var accelServiceUuid = 'aa80';
 var lightServiceUuid = 'aa20';
+var batteryServiceUuid = '180f';
 var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid];
 
 var weatherDataCharUuid = 'aa41';
@@ -38,6 +39,9 @@ var lightPeriodCharUuid = 'aa23';
 var lightDataChar = null;
 var lightOnChar= null;
 var lightPeriodChar = null;
+
+var batteryDataCharUuid = '2a19';
+var batteryDataChar = null;
 
 
 
@@ -100,7 +104,7 @@ function connectToEnviro(peripheral) {
       noble.startScanning();
 
       console.log("[BLE] Connected");
-      
+
       peripheral.once('disconnect', function() {
         // handle the disconnection event of the peripheral
         console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");
@@ -122,7 +126,7 @@ function connectToEnviro(peripheral) {
         peripheral.discoverSomeServicesAndCharacteristics(serviceUuids, [], function(error, services, characteristics){
 
           characteristics.forEach(function(characteristic) {
-              console.log('[BLE] found characteristic:', characteristic.uuid);
+              console.log("[BLE]  ", peripheral.advertisement.localName, " found characteristic:", characteristic.uuid);
               if (weatherOnCharUuid == characteristic.uuid) {
                 weatherOnChar = characteristic;
               }
@@ -150,6 +154,9 @@ function connectToEnviro(peripheral) {
               else if (lightPeriodCharUuid == characteristic.uuid) {
                 lightPeriodChar = characteristic;
               }
+              else if (batteryDataCharUuid == characteristic.uuid) {
+                batteryDataChar = characteristic;
+              }
             })
      
            // Check to see if we found all of our characteristics.
@@ -162,10 +169,12 @@ function connectToEnviro(peripheral) {
                 lightDataChar &&
                 weatherPeriodChar &&
                 accelPeriodChar &&
-                lightPeriodChar) {
+                lightPeriodChar &&
+                batteryDataChar) {
               turnWeatherSensorOn(peripheral);
               turnAccelSensorOn(peripheral);
               turnLightSensorOn(peripheral);
+              turnBatterySensorOn(peripheral);
               setPeriod(accelPeriodChar, 30);
               setPeriod(weatherPeriodChar, 30);
               setPeriod(lightPeriodChar, 30);
@@ -201,7 +210,7 @@ function turnWeatherSensorOn(peripheral){
 
     		weatherDataChar.subscribe(function(err) {
            		if(!err){
-           			console.log("[BLE] Subscribed to weather"); 
+           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to weather"); 
            		}
           	});
     	}
@@ -224,7 +233,7 @@ function turnAccelSensorOn(peripheral){
 
     		accelDataChar.subscribe(function(err) {
            		if(!err){
-           			console.log("[BLE] Subscribed to accelerometer");
+           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to accelerometer");
            		}
           	});
     	}
@@ -244,7 +253,7 @@ function turnLightSensorOn(peripheral){
 
     		lightDataChar.subscribe(function(err) {
            		if(!err){
-           			console.log("[BLE] Subscribed to light");
+           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to light");
            		}
           	});
     	}
@@ -252,4 +261,22 @@ function turnLightSensorOn(peripheral){
 }
 
 
+function turnBatterySensorOn(peripheral){
 
+    // Turn on accelerometer sensor and subsribe to it
+    batteryOnChar.write(onValue, false, function(err) {
+    	if (!err) {
+    		batteryDataChar.on('data', function(data, isNotification) {
+            	var batteryLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
+            	console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : ' + batteryLevel + ' mV');
+            	deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + batteryLevel + ' }}');
+          });
+
+    		batteryDataChar.subscribe(function(err) {
+           		if(!err){
+           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to battery");
+           		}
+          	});
+    	}
+    })
+}

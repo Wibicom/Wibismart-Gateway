@@ -17,7 +17,7 @@ var weatherServiceUuid = 'aa40';
 var accelServiceUuid = 'aa80';
 var lightServiceUuid = 'aa20';
 var batteryServiceUuid = '180f';
-var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid];
+var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, batteryServiceUuid];
 
 var weatherDataCharUuid = 'aa41';
 var weatherOnCharUuid = 'aa42';

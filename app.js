@@ -183,10 +183,14 @@ function connectToEnviro(peripheral) {
               console.log('[BLE] missing characteristics');
             }
 
-            peripheral.updateRssi(function(err, rssi) {
-              console.log(rssi +'dbm');
+            setInterval(function(){
+              peripheral.updateRssi(function(err, rssi) {
+                console.log(rssi);
+                // console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : { Rssi : ' + rssi + ' dbm }');
+                // deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"d" : { "rssi" : ' + rssi + '}}');
+              });
 
-            });
+            }, 30);
         });
     })
 }

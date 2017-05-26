@@ -198,7 +198,7 @@ function setPeriod(char, period){
 	var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
     char.write(periodBuf, false, function(err) {
-      console.log("buffer executed");s
+      console.log("buffer executed");
     });
 }
 

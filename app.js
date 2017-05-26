@@ -264,7 +264,6 @@ function turnLightSensorOn(peripheral){
 function turnBatteryReadOn(peripheral){
 
       batteryDataChar.on('data', function(data, isNotification) {
-        console.log(data);
             var batteryLevel = data.readUInt8(0);
             console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Level : ' + batteryLevel + ' %');
             deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "light" : ' + batteryLevel + ' }}');

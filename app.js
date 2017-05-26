@@ -86,7 +86,7 @@ noble.on('discover', function(peripheral) {
   
 //  console.log('[BLE] found peripheral:\n' + peripheral + '\n\n\n\n\n');
   // Check if peripheral contains 'Enviro' in its name
-  if(/*peripheral.address == 'b0:b4:48:e4:9c:80' ||*/ (peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1)) {
+  if(peripheral.address == 'b0:b4:48:e4:9c:80' || (peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1)) {
   	console.log('[BLE] Connecting to peripheral:', peripheral.advertisement['localName'], " with address : ", peripheral.address, ' ...');
   	// we found a enviro, stop scanning
   	//noble.stopScanning();
@@ -174,7 +174,7 @@ function connectToEnviro(peripheral) {
               turnWeatherSensorOn(peripheral);
               turnAccelSensorOn(peripheral);
               turnLightSensorOn(peripheral);
-              turnBatterySensorOn(peripheral);
+              turnBatteryReadOn(peripheral);
               setPeriod(accelPeriodChar, 30);
               setPeriod(weatherPeriodChar, 30);
               setPeriod(lightPeriodChar, 30);
@@ -261,22 +261,19 @@ function turnLightSensorOn(peripheral){
 }
 
 
-function turnBatterySensorOn(peripheral){
+function turnBatteryReadOn(peripheral){
 
-    // Turn on accelerometer sensor and subsribe to it
-    batteryOnChar.write(onValue, false, function(err) {
-    	if (!err) {
-    		batteryDataChar.on('data', function(data, isNotification) {
-            	var batteryLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
-            	console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : ' + batteryLevel + ' mV');
-            	deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + batteryLevel + ' }}');
+      batteryDataChar.on('data', function(data, isNotification) {
+            var batteryLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
+            console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Level : ' + batteryLevel + ' %');
+            deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "light" : ' + batteryLevel + ' }}');
+        });
+
+      batteryDataChar.subscribe(function(err) {
+            if(!err){
+              console.log("[BLE] ", peripheral.advertisement.localName, " Battery level notification on");
+            }
           });
-
-    		batteryDataChar.subscribe(function(err) {
-           		if(!err){
-           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to battery");
-           		}
-          	});
-    	}
-    })
+    
+    
 }

@@ -182,6 +182,11 @@ function connectToEnviro(peripheral) {
             else {
               console.log('[BLE] missing characteristics');
             }
+
+            peripheral.updateRssi(function(err, rssi) {
+              console.log(rssi +'dbm');
+
+            });
         });
     })
 }

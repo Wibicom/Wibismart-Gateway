@@ -188,6 +188,9 @@ function connectToEnviro(peripheral) {
               peripheral.updateRssi(function(err, rssi) {
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : { Rssi : ' + rssi + ' dbm }');
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"d" : { "rssi" : ' + rssi + ' }}');
+
+              //keep looking for more enviros
+              noble.startScanning();
             });
             }, 3000);
         });

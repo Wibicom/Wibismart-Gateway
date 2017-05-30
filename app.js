@@ -86,7 +86,7 @@ noble.on('discover', function(peripheral) {
   
 //  console.log('[BLE] found peripheral:\n' + peripheral + '\n\n\n\n\n');
   // Check if peripheral contains 'Enviro' in its name
-  if(peripheral.address == 'b0:b4:48:e4:bf:03' && (peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1)) {
+  if(/*peripheral.address == 'b0:b4:48:e4:bf:03' && */(peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1)) {
   	console.log('[BLE] Connecting to peripheral:', peripheral.advertisement['localName'], " with address : ", peripheral.address, ' ...');
   	// we found a enviro, stop scanning
   	//noble.stopScanning();
@@ -186,7 +186,7 @@ function connectToEnviro(peripheral) {
             //sending Rssi information periodically every 3 seconds;
             setInterval(function() {
               peripheral.updateRssi(function(err, rssi) {
-              console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : { Rssi : ' + rssi + ' dbm }');
+              console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"d" : { "rssi" : ' + rssi + ' }}');
 
               //keep looking for more enviros

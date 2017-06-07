@@ -190,7 +190,7 @@ function connectToEnviro(peripheral) {
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"d" : { "rssi" : ' + rssi + ' }}');
 
               //keep looking for more enviros
-              //noble.startScanning();
+              noble.startScanning();
             });
             }, 3000);
         });

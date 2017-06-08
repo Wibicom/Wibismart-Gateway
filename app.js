@@ -75,16 +75,16 @@ noble.on('stateChange', function(state) {
 deviceClient.on('connect', function () {
   //publishing event using the default quality of service
 	console.log('[MQTT] Connected');
+  deviceClient.subscribeToGatewayCommand("BeagleBone", "506583dd5c62", 'test');
+  deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
+    console.log(type, id, commandName, commandFormat, payload, topic);
+  });
 
   // Once we are connected to the mqtt broker, we can scan for bluetooth devices
 	console.log('[BLE] Scanning for Enviro...');
   noble.startScanning([], false);
 });
 
-deviceClient.subscribeToGatewayCommand("BeagleBone", "506583dd5c62", 'test');
-deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
-  console.log(type, id, commandName, commandFormat, payload, topic);
-});
 
 
 noble.on('discover', function(peripheral) {

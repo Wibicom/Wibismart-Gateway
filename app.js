@@ -81,6 +81,11 @@ deviceClient.on('connect', function () {
   noble.startScanning([], false);
 });
 
+deviceClient.subscribeToGatewayCommand("BeagleBone", "506583dd5c62", 'test');
+deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
+  console.log(type, id, commandName, commandFormat, payload, topic);
+});
+
 
 noble.on('discover', function(peripheral) {
   

@@ -81,9 +81,13 @@ deviceClient.on('connect', function () {
   deviceClient.subscribeToGatewayCommand("scan");
   deviceClient.subscribeToGatewayCommand("connectTo");
   deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
-    console.log("Recieved command " + type, id, commandName, commandFormat, payload, topic);
+    console.log("Recieved command " +commandName);
+    payload = payload.toString('utf8');
+    console.log(payload);
+    payload = JSON.parse(payload);
     switch(commandName) {
       case 'scan':
+      currentDiscoveredDevices = [];
         noble.startScanning([], false);
         setTimeout(function() {//after 5 seconds we send back the information about the devices we discovered.
           var out = [];
@@ -105,6 +109,7 @@ deviceClient.on('connect', function () {
             connectToEnviro(currentDiscoveredDevices[i]);
           }
         }
+        deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + peripheral.advertisement.localName + " you are trying to connect to is not found. Try scanning again..."}));
     }
   });
 
@@ -116,13 +121,9 @@ noble.on('discover', function(peripheral) {
   // Check if peripheral contains 'Enviro' in its name
   if(peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1) {
   	console.log('[BLE] Discovered Enviro ', peripheral.advertisement['localName'], " with address : ", peripheral.address, '.');
-  	// we found a enviro, stop scanning
-  	//noble.stopScanning();
-    if(currentDiscoveredDevices.indexOf(peripheral) > 0) { //check that the device has not already been discovered
-      currentDiscoveredDevices.push(peripheral);
-    }
-	  // Once the peripheral has been discovered, then connect to it.
-    //connectToEnviro(peripheral);
+
+    
+    currentDiscoveredDevices.push(peripheral);
 	  
   }
 })

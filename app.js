@@ -114,9 +114,8 @@ deviceClient.on('connect', function () {
           deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is not found. Try scanning again..."}));
         }
         break;
-      case 'toggleSensor':
+      case 'sensorToggle':
         var targetDevice = connectedDevices[payload.data.deviceId];
-        console.log("target device: " + targetDevice + " ,connectedDevice: " + JSON.stringify(connectedDevices)+ " ,discovered devices: " + currentDiscoveredDevices);
         if(targetDevice == undefined || targetDevice == null) {
            deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot toggle its sensors."}));
            break;

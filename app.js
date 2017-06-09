@@ -82,8 +82,6 @@ deviceClient.on('connect', function () {
   deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
     console.log(type, id, commandName, commandFormat, payload, topic);
     if(commandName == "scan") {
-        //when recieved instruction to scan from the web app we start scanning.
-      	console.log('[BLE] Scanning for Enviro...');
         noble.startScanning([], false);
         setTimeout(function() {//after 5 seconds we send back the information about the devices we discovered.
           var out = [];

@@ -43,6 +43,9 @@ var lightPeriodChar = null;
 var batteryDataCharUuid = '2a19';
 var batteryDataChar = null;
 
+//varibles used for commands
+var currentDiscoveredDevices = [];
+
 
 
 // Write 0x01 value to turn sensors on
@@ -75,30 +78,40 @@ noble.on('stateChange', function(state) {
 deviceClient.on('connect', function () {
   //publishing event using the default quality of service
 	console.log('[MQTT] Connected');
-  deviceClient.subscribeToGatewayCommand('test');
+  deviceClient.subscribeToGatewayCommand('scan');
   deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
     console.log(type, id, commandName, commandFormat, payload, topic);
-    console.log("command recieved");
+    if(commandName == "scan") {
+        //when recieved instruction to scan from the web app we start scanning.
+      	console.log('[BLE] Scanning for Enviro...');
+        noble.startScanning([], false);
+        setTimeout(function() {//after 5 seconds we send back the information about the devices we discovered.
+          var out = [];
+          for(i in currentDiscoveredDevices) {
+            var set = {};
+            set.localName = currentDiscoveredDevices[i].localName;
+            set.deviceId = currentDiscoveredDevices[i].address.replace(/:/g, '');
+            out.push(set);
+          }
+          console.log("[MQTT] sending back scan response. (" + currentDiscoveredDevices.length + " devices)");
+          deviceClient.publishGatewayEvent("scanResponse", 'json', JSON.stringify({d:out}));
+        }, 5000);
+    }
   });
 
-  // Once we are connected to the mqtt broker, we can scan for bluetooth devices
-	console.log('[BLE] Scanning for Enviro...');
-  noble.startScanning([], false);
 });
 
 
 
 noble.on('discover', function(peripheral) {
-  
-//  console.log('[BLE] found peripheral:\n' + peripheral + '\n\n\n\n\n');
   // Check if peripheral contains 'Enviro' in its name
-  if(false && (peripheral.address == 'b0:b4:48:e4:bf:03' || peripheral.address == '11:22:33:44:55:66' || peripheral.address == 'b0:b4:48:e4:9c:80') && (peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1)) {
-  	console.log('[BLE] Connecting to peripheral:', peripheral.advertisement['localName'], " with address : ", peripheral.address, ' ...');
+  if(peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1) {
+  	console.log('[BLE] Discovered Enviro ', peripheral.advertisement['localName'], " with address : ", peripheral.address, '.');
   	// we found a enviro, stop scanning
   	//noble.stopScanning();
-
+    currentDiscoveredDevices.push(peripheral);
 	  // Once the peripheral has been discovered, then connect to it.
-    connectToEnviro(peripheral);
+    //connectToEnviro(peripheral);
 	  
   }
 })

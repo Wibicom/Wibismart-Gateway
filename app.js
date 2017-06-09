@@ -121,12 +121,9 @@ deviceClient.on('connect', function () {
            break;
         }
         var peripheral = targetDevice.peripheral;
-        console.log(payload.data.value);
-        console.log(payload.data.value);
         if(payload.data.value == "off") {
           switch(payload.data.sensor) {
             case 'weatherCharOn':
-            console.log("should print");
               turnSensorOff(peripheral, payload.data.sensor);
               break;
             case 'accelCharOn':
@@ -141,13 +138,13 @@ deviceClient.on('connect', function () {
         }
         else if (payload.data.value == "on") {
           switch(payload.data.sensor) {
-            case 'weatherCharOn':
+            case 'weatherOnChar':
               turnWeatherSensorOn(peripheral);
               break;
-            case 'accelCharOn':
+            case 'accelOnChar':
               turnAccelSensorOn(peripheral);
               break;
-            case 'lightCharOn':
+            case 'lightOnChar':
               turnLightSensorOn(peripheral);
               break;
             default:
@@ -293,8 +290,9 @@ function connectToEnviro(peripheral) {
 function setPeriod(char, period, peripheral){
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
-    console.log(char);
+    console.log("writing period");///////////////////////////////////////////////////::
     char.write(periodBuf, false, function(err) {
+      console.log("period callback");
       if(err) {
         deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10}));
         throw err;

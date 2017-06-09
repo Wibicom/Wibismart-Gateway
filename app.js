@@ -22,26 +22,20 @@ var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, batt
 var weatherDataCharUuid = 'aa41';
 var weatherOnCharUuid = 'aa42';
 var weatherPeriodCharUuid = 'aa44';
-var weatherDataChar = null;
-var weatherOnChar = null;
-var weatherPeriodChar = null;
+
 
 var accelDataCharUuid = 'aa81';
 var accelOnCharUuid = 'aa82';
 var accelPeriodCharUuid = 'aa83';
-var accelDataChar = null;
-var accelOnChar = null;
-var accelPeriodChar = null;
+
 
 var lightDataCharUuid = 'aa21';
 var lightOnCharUuid = 'aa22';
 var lightPeriodCharUuid = 'aa23';
-var lightDataChar = null;
-var lightOnChar= null;
-var lightPeriodChar = null;
+
 
 var batteryDataCharUuid = '2a19';
-var batteryDataChar = null;
+
 
 //varibles used for commands
 var currentDiscoveredDevices = [];
@@ -83,6 +77,8 @@ deviceClient.on('connect', function () {
 	console.log('[MQTT] Connected');
   deviceClient.subscribeToGatewayCommand("scan");
   deviceClient.subscribeToGatewayCommand("connectTo");
+  deviceClient.subscribeToGatewayCommand("sensorToggle");
+  deviceClient.subscribeToGatewayCommand("sensorPeriod");
   deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
     console.log("Recieved command " +commandName);
     payload = payload.toString('utf8');
@@ -104,15 +100,19 @@ deviceClient.on('connect', function () {
         }, 7000);
         break;
       case 'connectTo':
+      var found = false;
         for(i in currentDiscoveredDevices) {
           console.log(currentDiscoveredDevices[i].address.replace(/:/g, '')+ "///"+ currentDiscoveredDevices[i].advertisement.localName);
           if(currentDiscoveredDevices[i].address.replace(/:/g, '') == payload.data.deviceId && currentDiscoveredDevices[i].advertisement.localName == payload.data.localName) {
             console.log("[BLE] Connecting to device " + payload.data.localName + " with id " + payload.data.deviceId + "...");
             connectToEnviro(currentDiscoveredDevices[i]);
+            found = true;
           }
         }
-        console.log("was not able to connect to " + payload.localName);
-        deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is not found. Try scanning again..."}));
+        if (found == false) {
+          console.log("Did not find " + payload.data.localName);
+          deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is not found. Try scanning again..."}));
+        }
         break;
       case 'toggleSensor':
         var targetDevice = connectedDevices[payload.data.deviceId];
@@ -120,6 +120,7 @@ deviceClient.on('connect', function () {
            deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot toggle its sensors."}));
            break;
         }
+        var peripheral = targetDevice.peripheral;
         if(payload.data.value == "off") {
           switch(payload.data.sensor) {
             case 'weatherCharOn':
@@ -151,7 +152,16 @@ deviceClient.on('connect', function () {
           }
         }
         break;
-
+      case 'sensorPeriod':
+        var targetDevice = connectedDevices[payload.data.deviceId];
+        if(targetDevice == null) {
+           deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot change the period of its sensors."}));
+           break;
+        }
+        peripheral = targetDevice.peripheral;
+        var period = payload.data.value*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
+        var targetSensor = targetDevice[payload.data.sensor];
+        setPeriod(targetSensor, period, peripheral);
     }
   });
 
@@ -255,9 +265,9 @@ function connectToEnviro(peripheral) {
               turnAccelSensorOn(peripheral);
               turnLightSensorOn(peripheral);
               turnBatteryReadOn(peripheral);
-              setPeriod(thisPeripheral.accelPeriodChar, 30);
-              setPeriod(thisPeripheral.weatherPeriodChar, 30);
-              setPeriod(thisPeripheral.lightPeriodChar, 30);
+              setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral);
+              setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral);
+              setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral);
             }
             else {
               console.log('[BLE] missing characteristics');
@@ -277,11 +287,17 @@ function connectToEnviro(peripheral) {
     })
 }
 
-function setPeriod(char, period){
+function setPeriod(char, period, peripheral){
 	var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
     char.write(periodBuf, false, function(err) {
-
+      if(err) {
+        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10}));
+        throw err;
+      }
+      else {
+        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " was successfully set to " + period/10}));
+      }
     });
 }
 

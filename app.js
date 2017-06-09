@@ -154,8 +154,9 @@ deviceClient.on('connect', function () {
         break;
       case 'sensorPeriod':
         var targetDevice = connectedDevices[payload.data.deviceId];
+        console.log(targetDevice);
         if(targetDevice == null) {
-           deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot change the period of its sensors."}));
+           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot change the period of its sensors."}));
            break;
         }
         peripheral = targetDevice.peripheral;

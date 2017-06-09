@@ -288,6 +288,7 @@ function connectToEnviro(peripheral) {
 }
 
 function setPeriod(char, period, peripheral){
+  console.log("period called");
 	var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
     char.write(periodBuf, false, function(err) {

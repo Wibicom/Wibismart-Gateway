@@ -83,7 +83,6 @@ deviceClient.on('connect', function () {
   deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
     console.log("Recieved command " +commandName);
     payload = payload.toString('utf8');
-    console.log(payload);
     payload = JSON.parse(payload);
     switch(commandName) {
       case 'scan':
@@ -102,14 +101,14 @@ deviceClient.on('connect', function () {
         }, 5000);
         break;
       case 'connectTo':
-        console.log(payload);
         for(i in currentDiscoveredDevices) {
+          console.log(currentDiscoveredDevices[i].address.replace(/:/g, '')+ "///"+ currentDiscoveredDevices[i].advertisement.localName);
           if(currentDiscoveredDevices[i].address.replace(/:/g, '') == payload.data.deviceId && currentDiscoveredDevices[i].advertisement.localName == payload.data.localName) {
             console.log("[BLE] Connecting to device " + payload.data.localName + " with id " + payload.data.deviceId + "...");
             connectToEnviro(currentDiscoveredDevices[i]);
           }
         }
-        deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + peripheral.advertisement.localName + " you are trying to connect to is not found. Try scanning again..."}));
+        deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is not found. Try scanning again..."}));
     }
   });
 

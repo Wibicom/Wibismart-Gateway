@@ -78,22 +78,33 @@ noble.on('stateChange', function(state) {
 deviceClient.on('connect', function () {
   //publishing event using the default quality of service
 	console.log('[MQTT] Connected');
-  deviceClient.subscribeToGatewayCommand('scan');
+  deviceClient.subscribeToGatewayCommand("scan");
+  deviceClient.subscribeToGatewayCommand("connectTo");
   deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
-    console.log(type, id, commandName, commandFormat, payload, topic);
-    if(commandName == "scan") {
+    console.log("Recieved command " + type, id, commandName, commandFormat, payload, topic);
+    switch(commandName) {
+      case 'scan':
         noble.startScanning([], false);
         setTimeout(function() {//after 5 seconds we send back the information about the devices we discovered.
           var out = [];
           for(i in currentDiscoveredDevices) {
             var set = {};
-            set.localName = currentDiscoveredDevices[i].localName;
+            set.localName = currentDiscoveredDevices[i].advertisement.localName;
             set.deviceId = currentDiscoveredDevices[i].address.replace(/:/g, '');
             out.push(set);
           }
           console.log("[MQTT] sending back scan response. (" + currentDiscoveredDevices.length + " devices)");
           deviceClient.publishGatewayEvent("scanResponse", 'json', JSON.stringify({d:out}));
         }, 5000);
+        break;
+      case 'connectTo':
+        console.log(payload);
+        for(i in currentDiscoveredDevices) {
+          if(currentDiscoveredDevices[i].address.replace(/:/g, '') == payload.data.deviceId && currentDiscoveredDevices[i].advertisement.localName == payload.data.localName) {
+            console.log("[BLE] Connecting to device " + payload.data.localName + " with id " + payload.data.deviceId + "...");
+            connectToEnviro(currentDiscoveredDevices[i]);
+          }
+        }
     }
   });
 
@@ -107,7 +118,9 @@ noble.on('discover', function(peripheral) {
   	console.log('[BLE] Discovered Enviro ', peripheral.advertisement['localName'], " with address : ", peripheral.address, '.');
   	// we found a enviro, stop scanning
   	//noble.stopScanning();
-    currentDiscoveredDevices.push(peripheral);
+    if(currentDiscoveredDevices.indexOf(peripheral) > 0) { //check that the device has not already been discovered
+      currentDiscoveredDevices.push(peripheral);
+    }
 	  // Once the peripheral has been discovered, then connect to it.
     //connectToEnviro(peripheral);
 	  
@@ -118,14 +131,16 @@ noble.on('discover', function(peripheral) {
 function connectToEnviro(peripheral) {
   peripheral.connect(function(err) {
       //**Start scanning for more Enviros
-      noble.startScanning();
+      //noble.startScanning();
 
-      console.log("[BLE] Connected");
+      console.log("[BLE] Connected to device " + peripheral.advertisement.localName);
+      deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " connected successfully!"}));
 
       peripheral.once('disconnect', function() {
         // handle the disconnection event of the peripheral
         console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");
         console.log('      Attempting to reconnect ...');
+        deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " disconnected, atempting to reconect."}));
         connectToEnviro(peripheral);
       });
       console.log("[BLE] Looking for characteristics ...");

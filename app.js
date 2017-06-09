@@ -116,7 +116,7 @@ deviceClient.on('connect', function () {
         break;
       case 'toggleSensor':
         var targetDevice = connectedDevices[payload.data.deviceId];
-        if(targetDevice == null) {
+        if(targetDevice == undefined || targetDevice == null) {
            deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot toggle its sensors."}));
            break;
         }
@@ -154,8 +154,7 @@ deviceClient.on('connect', function () {
         break;
       case 'sensorPeriod':
         var targetDevice = connectedDevices[payload.data.deviceId];
-        console.log(targetDevice);
-        if(targetDevice == null) {
+        if(targetDevice == undefined || targetDevice == null) {
            deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot change the period of its sensors."}));
            break;
         }

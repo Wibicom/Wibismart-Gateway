@@ -45,12 +45,15 @@ var batteryDataChar = null;
 
 //varibles used for commands
 var currentDiscoveredDevices = [];
+var connectedDevices = {};
 
 
 
 // Write 0x01 value to turn sensors on
 var onValue = new Buffer(1);
 onValue.writeUInt8(0x01, 0);
+var offValue = new Buffer(1);
+offValue.writeUInt8(0x00, 0);
 
 var mqttConfig = {
     "org" : "4rxa4d",
@@ -98,7 +101,7 @@ deviceClient.on('connect', function () {
           }
           console.log("[MQTT] sending back scan response. (" + currentDiscoveredDevices.length + " devices)");
           deviceClient.publishGatewayEvent("scanResponse", 'json', JSON.stringify({d:out}));
-        }, 5000);
+        }, 7000);
         break;
       case 'connectTo':
         for(i in currentDiscoveredDevices) {
@@ -108,7 +111,47 @@ deviceClient.on('connect', function () {
             connectToEnviro(currentDiscoveredDevices[i]);
           }
         }
+        console.log("was not able to connect to " + payload.localName);
         deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is not found. Try scanning again..."}));
+        break;
+      case 'toggleSensor':
+        var targetDevice = connectedDevices[payload.data.deviceId];
+        if(targetDevice == null) {
+           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot toggle its sensors."}));
+           break;
+        }
+        if(payload.data.value == "off") {
+          switch(payload.data.sensor) {
+            case 'weatherCharOn':
+              turnWeatherSensorOff(peripheral);
+              break;
+            case 'accelCharOn':
+              turnAccelSensorOff(peripheral);
+              break;
+            case 'lightCharOn':
+              turnLightSensorOff(peripheral);
+              break;
+            default:
+              break;
+          }
+        }
+        else if (payload.data.value == "on") {
+          switch(payload.data.sensor) {
+            case 'weatherCharOn':
+              turnWeatherSensorOn(peripheral, payload.data.sensor);
+              break;
+            case 'accelCharOn':
+              turnAccelSensorOn(peripheral, payload.data.sensor);
+              break;
+            case 'lightCharOn':
+              turnLightSensorOn(peripheral, payload.data.sensor);
+              break;
+            default:
+              break;
+          }
+        }
+        break;
+
     }
   });
 
@@ -130,14 +173,19 @@ noble.on('discover', function(peripheral) {
 
 function connectToEnviro(peripheral) {
   peripheral.connect(function(err) {
-      //**Start scanning for more Enviros
-      //noble.startScanning();
+      if(err) {
+        deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Connection to device " + peripheral.advertisement.localName + " was attempted and failed..."}));
+        throw err;
+      }
+      connectedDevices[peripheral.address.replace(/:/g, '')] = {peripheral: peripheral};
+      var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
 
       console.log("[BLE] Connected to device " + peripheral.advertisement.localName);
       deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " connected successfully!"}));
 
       peripheral.once('disconnect', function() {
         // handle the disconnection event of the peripheral
+        connectedDevices[peripheral.address.replace(/:/g, '')] = null;
         console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");
         console.log('      Attempting to reconnect ...');
         deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " disconnected, atempting to reconect."}));
@@ -160,56 +208,56 @@ function connectToEnviro(peripheral) {
           characteristics.forEach(function(characteristic) {
               console.log("[BLE]  ", peripheral.advertisement.localName, " found characteristic:", characteristic.uuid);
               if (weatherOnCharUuid == characteristic.uuid) {
-                weatherOnChar = characteristic;
+                thisPeripheral.weatherOnChar = characteristic;
               }
               else if (accelOnCharUuid == characteristic.uuid) {
-                accelOnChar = characteristic;
+                thisPeripheral.accelOnChar = characteristic;
               }
               else if (lightOnCharUuid == characteristic.uuid) {
-                lightOnChar = characteristic;
+                thisPeripheral.lightOnChar = characteristic;
               }
               else if (weatherDataCharUuid == characteristic.uuid) {
-                weatherDataChar = characteristic;
+                thisPeripheral.weatherDataChar = characteristic;
               }
               else if (accelDataCharUuid == characteristic.uuid) {
-                accelDataChar = characteristic;
+                thisPeripheral.accelDataChar = characteristic;
               }
               else if (lightDataCharUuid == characteristic.uuid) {
-                lightDataChar = characteristic;
+                thisPeripheral.lightDataChar = characteristic;
               } 
               else if (weatherPeriodCharUuid == characteristic.uuid) {
-                weatherPeriodChar = characteristic;
+                thisPeripheral.weatherPeriodChar = characteristic;
               }
               else if (accelPeriodCharUuid == characteristic.uuid) {
-                accelPeriodChar = characteristic;
+                thisPeripheral.accelPeriodChar = characteristic;
               }
               else if (lightPeriodCharUuid == characteristic.uuid) {
-                lightPeriodChar = characteristic;
+                thisPeripheral.lightPeriodChar = characteristic;
               }
               else if (batteryDataCharUuid == characteristic.uuid) {
-                batteryDataChar = characteristic;
+                thisPeripheral.batteryDataChar = characteristic;
               }
             })
      
            // Check to see if we found all of our characteristics.
             //
-            if (weatherOnChar &&
-                accelOnChar &&
-                lightOnChar && 
-                weatherDataChar &&
-                accelDataChar &&
-                lightDataChar &&
-                weatherPeriodChar &&
-                accelPeriodChar &&
-                lightPeriodChar &&
-                batteryDataChar) {
+            if (thisPeripheral.weatherOnChar &&
+                thisPeripheral.accelOnChar &&
+                thisPeripheral.lightOnChar && 
+                thisPeripheral.weatherDataChar &&
+                thisPeripheral.accelDataChar &&
+                thisPeripheral.lightDataChar &&
+                thisPeripheral.weatherPeriodChar &&
+                thisPeripheral.accelPeriodChar &&
+                thisPeripheral.lightPeriodChar &&
+                thisPeripheral.batteryDataChar) {
               turnWeatherSensorOn(peripheral);
               turnAccelSensorOn(peripheral);
               turnLightSensorOn(peripheral);
               turnBatteryReadOn(peripheral);
-              setPeriod(accelPeriodChar, 30);
-              setPeriod(weatherPeriodChar, 30);
-              setPeriod(lightPeriodChar, 30);
+              setPeriod(thisPeripheral.accelPeriodChar, 30);
+              setPeriod(thisPeripheral.weatherPeriodChar, 30);
+              setPeriod(thisPeripheral.lightPeriodChar, 30);
             }
             else {
               console.log('[BLE] missing characteristics');
@@ -239,11 +287,12 @@ function setPeriod(char, period){
 
 
 function turnWeatherSensorOn(peripheral){
-
+    var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
-    weatherOnChar.write(onValue, false, function(err) {
+    thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
     	if (!err) {
-    		weatherDataChar.on('data', function(data, isNotification) {
+        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
+    		thisPeripheral.weatherDataChar.on('data', function(data, isNotification) {
             	
             var temperature = ((data.readUInt8(2) * 0x10000 + data.readUInt8(1) * 0x100 + data.readUInt8(0)) / 100.0).toFixed(1);
         		var pressure = ((data.readUInt8(5) * 0x10000 + data.readUInt8(4) * 0x100 + data.readUInt8(3)) / 100.0).toFixed(1);
@@ -252,7 +301,7 @@ function turnWeatherSensorOn(peripheral){
             deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"d" : { "temperature" : ' + temperature + ', "pressure" : ' + pressure + ', "humidity" : ' + humidity + ' }}');
           });
 
-    		weatherDataChar.subscribe(function(err) {
+    		thisPeripheral.weatherDataChar.subscribe(function(err) {
            		if(!err){
            			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to weather"); 
            		}
@@ -262,11 +311,12 @@ function turnWeatherSensorOn(peripheral){
 }
 
 function turnAccelSensorOn(peripheral){
-
+    var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on accelerometer sensor and subsribe to it
-    accelOnChar.write(onValue, false, function(err) {
+    thisPeripheral.accelOnChar.write(onValue, false, function(err) {
     	if (!err) {
-    		accelDataChar.on('data', function(data, isNotification) {
+        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Accelerometer of " + peripheral.advertisement.localName + " has connected successfully!"}));
+    		thisPeripheral.accelDataChar.on('data', function(data, isNotification) {
 
             var accelX = ((data.readInt8(1) * 0x100 + data.readInt8(0)) * 0.488).toFixed(0);
         		var accelY = ((data.readInt8(3) * 0x100 + data.readInt8(2)) * 0.488).toFixed(0);
@@ -275,7 +325,7 @@ function turnAccelSensorOn(peripheral){
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"d" : { "x" : ' + accelX + ', "y" : ' + accelY + ', "z" : ' + accelZ + ' }}');
           });
 
-    		accelDataChar.subscribe(function(err) {
+    		thisPeripheral.accelDataChar.subscribe(function(err) {
            		if(!err){
            			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to accelerometer");
            		}
@@ -285,17 +335,18 @@ function turnAccelSensorOn(peripheral){
 }
 
 function turnLightSensorOn(peripheral){
-
+    var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on accelerometer sensor and subsribe to it
-    lightOnChar.write(onValue, false, function(err) {
+    thisPeripheral.lightOnChar.write(onValue, false, function(err) {
     	if (!err) {
-    		lightDataChar.on('data', function(data, isNotification) {
+                deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
+    		thisPeripheral.lightDataChar.on('data', function(data, isNotification) {
             	var lightLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
             	console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : ' + lightLevel + ' mV');
             	deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + lightLevel + ' }}');
           });
 
-    		lightDataChar.subscribe(function(err) {
+    		thisPeripheral.lightDataChar.subscribe(function(err) {
            		if(!err){
            			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to light");
            		}
@@ -306,18 +357,33 @@ function turnLightSensorOn(peripheral){
 
 
 function turnBatteryReadOn(peripheral){
-
-      batteryDataChar.on('data', function(data, isNotification) {
+      var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+      thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
             var batteryLevel = data.readUInt8(0);
             console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Level : ' + batteryLevel + ' %');
             deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ' }}');
         });
 
-      batteryDataChar.subscribe(function(err) {
+      thisPeripheral.batteryDataChar.subscribe(function(err) {
             if(!err){
               console.log("[BLE] ", peripheral.advertisement.localName, " Battery level notification on");
             }
           });
-    
-    
+}
+
+
+function turnSensorOff(peripheral, char) {
+    var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+    characteristic = thisPeripheral[char];
+    char = char.substring(0, char.indexOf("OnChar")-1);
+    if(characteristic != null) {
+      characteristic.write(offValue, false, function(err) {
+        if (!err) {
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The " + char + " sensor of " + peripheral.advertisement.localName + " has been turned off successfully!"}));
+        }
+        else {
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Could not turn off the " + char + " sensor of " + peripheral.advertisement.localName + "."}));
+        }
+      })
+    }
 }

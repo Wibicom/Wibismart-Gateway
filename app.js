@@ -121,16 +121,19 @@ deviceClient.on('connect', function () {
            break;
         }
         var peripheral = targetDevice.peripheral;
+        console.log(payload.data.value);
+        console.log(payload.data.value);
         if(payload.data.value == "off") {
           switch(payload.data.sensor) {
             case 'weatherCharOn':
-              turnWeatherSensorOff(peripheral);
+            console.log("should print");
+              turnSensorOff(peripheral, payload.data.sensor);
               break;
             case 'accelCharOn':
-              turnAccelSensorOff(peripheral);
+              turnSensorOff(peripheral, payload.data.sensor);
               break;
             case 'lightCharOn':
-              turnLightSensorOff(peripheral);
+              turnSensorOff(peripheral, payload.data.sensor);
               break;
             default:
               break;
@@ -139,13 +142,13 @@ deviceClient.on('connect', function () {
         else if (payload.data.value == "on") {
           switch(payload.data.sensor) {
             case 'weatherCharOn':
-              turnWeatherSensorOn(peripheral, payload.data.sensor);
+              turnWeatherSensorOn(peripheral);
               break;
             case 'accelCharOn':
-              turnAccelSensorOn(peripheral, payload.data.sensor);
+              turnAccelSensorOn(peripheral);
               break;
             case 'lightCharOn':
-              turnLightSensorOn(peripheral, payload.data.sensor);
+              turnLightSensorOn(peripheral);
               break;
             default:
               break;
@@ -288,9 +291,9 @@ function connectToEnviro(peripheral) {
 }
 
 function setPeriod(char, period, peripheral){
-  console.log("period called");
-	var periodBuf = new Buffer(1);
+	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
+    console.log(char);
     char.write(periodBuf, false, function(err) {
       if(err) {
         deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10}));

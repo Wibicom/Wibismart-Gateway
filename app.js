@@ -185,9 +185,11 @@ deviceClient.on('connect', function () {
               var out = {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "connected", };
               for(i in targetDevice) {
                 if(i != "peripheral" && i != "rssi") {
+                  console.log(i+ "," + typeof i);
                   out[i] = targetDevice[i];
                 }
               }
+              console.log(out);
               deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: out}));
             }
         }

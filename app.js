@@ -102,7 +102,6 @@ deviceClient.on('connect', function () {
       case 'connectTo':
       var found = false;
         for(i in currentDiscoveredDevices) {
-          console.log(currentDiscoveredDevices[i].address.replace(/:/g, '')+ "///"+ currentDiscoveredDevices[i].advertisement.localName);
           if(currentDiscoveredDevices[i].address.replace(/:/g, '') == payload.data.deviceId && currentDiscoveredDevices[i].advertisement.localName == payload.data.localName) {
             console.log("[BLE] Connecting to device " + payload.data.localName + " with id " + payload.data.deviceId + "...");
             connectToEnviro(currentDiscoveredDevices[i]);
@@ -160,9 +159,7 @@ deviceClient.on('connect', function () {
         }
         peripheral = targetDevice.peripheral;
         var period = payload.data.value;
-        console.log("peiod before "+ typeof peiord + " value: "+ period);
         period = parseFloat(period)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
-        console.log("period change period type "+ typeof period+ "value : "+ period);
         var targetSensor = targetDevice[payload.data.sensor];
         setPeriod(targetSensor, period, peripheral);
     }
@@ -293,9 +290,7 @@ function connectToEnviro(peripheral) {
 function setPeriod(char, period, peripheral){
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
-    console.log("writing period: " + period);
     char.write(periodBuf, false, function(err) {
-      console.log("period callback. err: "+err);
       if(err) {//I dont think these print because callback is printed but no messages.
         deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10}));
         throw err;
@@ -310,7 +305,6 @@ function setPeriod(char, period, peripheral){
 function turnWeatherSensorOn(peripheral){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
-    console.log("writing to weathersensor on char : "+ onValue);////////////////////////////////////
     thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
     	if (!err) {
         deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
@@ -397,13 +391,10 @@ function turnBatteryReadOn(peripheral){
 function turnSensorOff(peripheral, char) {
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     characteristic = thisPeripheral[char];
+    var dataCharacteristic = thisPeripheral[char.replace("On", "Data")];
     char = char.substring(0, char.indexOf("OnChar")-1);
-    console.log("turning off char : "+char );
     if(characteristic != null) {
-      console.log("Turning off sensor");
-      console.log("writing to weathersensor off char : "+ offValue);//////////////////
       characteristic.write(offValue, false, function(err) {
-        console.log("sensor collback. err: "+ err);////////////////////////////
         if (!err) {
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The " + char + " sensor of " + peripheral.advertisement.localName + " has been turned off successfully!"}));
         }
@@ -411,7 +402,7 @@ function turnSensorOff(peripheral, char) {
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Could not turn off the " + char + " sensor of " + peripheral.advertisement.localName + "."}));
         }
       });
-      characteristic.unsubscribe(function(err) {
+      dataCharacteristic.unsubscribe(function(err) {
            		if(!err){
            			console.log("[BLE] ", peripheral.advertisement.localName, " Unsubscribed to " + char);
            		}

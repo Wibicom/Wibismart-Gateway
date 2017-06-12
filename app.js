@@ -138,14 +138,13 @@ deviceClient.on('connect', function () {
         else if (payload.data.value == "on") {
           switch(payload.data.sensor) {
             case 'weatherOnChar':
-            console.log("calling sensor on");
               turnWeatherSensorOn(peripheral);
               break;
             case 'accelOnChar':
               turnAccelSensorOn(peripheral);
               break;
             case 'lightOnChar':
-              turnLightSensorOn(peripheral);
+              turnLightSensorOn(peripheral, false);
               break;
             default:
               break;
@@ -264,7 +263,7 @@ function connectToEnviro(peripheral) {
                 thisPeripheral.batteryDataChar) {
               turnWeatherSensorOn(peripheral);
               turnAccelSensorOn(peripheral);
-              turnLightSensorOn(peripheral);
+              turnLightSensorOn(peripheral, true);
               turnBatteryReadOn(peripheral);
               setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral);
               setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral);
@@ -304,7 +303,6 @@ function setPeriod(char, period, peripheral){
 
 
 function turnWeatherSensorOn(peripheral){
-  console.log("sensor on called");
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
     thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
@@ -352,17 +350,19 @@ function turnAccelSensorOn(peripheral){
     })
 }
 
-function turnLightSensorOn(peripheral){
+function turnLightSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on accelerometer sensor and subsribe to it
     thisPeripheral.lightOnChar.write(onValue, false, function(err) {
     	if (!err) {
-                deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
-    		thisPeripheral.lightDataChar.on('data', function(data, isNotification) {
+        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
+    		if(first) {
+          thisPeripheral.lightDataChar.on('data', function(data, isNotification) {
             	var lightLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
             	console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : ' + lightLevel + ' mV');
             	deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + lightLevel + ' }}');
           });
+        }
 
     		thisPeripheral.lightDataChar.subscribe(function(err) {
            		if(!err){

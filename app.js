@@ -123,13 +123,13 @@ deviceClient.on('connect', function () {
         var peripheral = targetDevice.peripheral;
         if(payload.data.value == "off") {
           switch(payload.data.sensor) {
-            case 'weatherCharOn':
+            case 'weatherOnChar':
               turnSensorOff(peripheral, payload.data.sensor);
               break;
-            case 'accelCharOn':
+            case 'accelOnChar':
               turnSensorOff(peripheral, payload.data.sensor);
               break;
-            case 'lightCharOn':
+            case 'lightOnChar':
               turnSensorOff(peripheral, payload.data.sensor);
               break;
             default:
@@ -159,8 +159,9 @@ deviceClient.on('connect', function () {
            break;
         }
         peripheral = targetDevice.peripheral;
+        var period = payload.data.value;
         console.log("peiod before "+ typeof peiord + " value: "+ period);
-        var period = parseFloat(payload.data.value)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
+        period = parseFloat(period)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
         console.log("period change period type "+ typeof period+ "value : "+ period);
         var targetSensor = targetDevice[payload.data.sensor];
         setPeriod(targetSensor, period, peripheral);

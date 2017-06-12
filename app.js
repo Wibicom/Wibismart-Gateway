@@ -290,10 +290,10 @@ function connectToEnviro(peripheral) {
 function setPeriod(char, period, peripheral){
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
-    console.log("writing period");///////////////////////////////////////////////////::
+    console.log("writing period: " + period);///////////////////////////////////////////////////::
     char.write(periodBuf, false, function(err) {
-      console.log("period callback");
-      if(err) {
+      console.log("period callback. err: "+err);
+      if(err) {//I dont think these print because callback is printed but no messages.
         deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10}));
         throw err;
       }
@@ -395,13 +395,20 @@ function turnSensorOff(peripheral, char) {
     characteristic = thisPeripheral[char];
     char = char.substring(0, char.indexOf("OnChar")-1);
     if(characteristic != null) {
+      console.log("Turning off sensor");
       characteristic.write(offValue, false, function(err) {
+        console.log("sensor collback. err: "+ err);
         if (!err) {
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The " + char + " sensor of " + peripheral.advertisement.localName + " has been turned off successfully!"}));
         }
         else {
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Could not turn off the " + char + " sensor of " + peripheral.advertisement.localName + "."}));
         }
-      })
+      });
+      characteristic.unsubscribe(function(err) {
+           		if(!err){
+           			console.log("[BLE] ", peripheral.advertisement.localName, " Unsubscribed to " + char);
+           		}
+          	});
     }
 }

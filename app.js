@@ -101,7 +101,17 @@ deviceClient.on('connect', function () {
         }, 10000);
         break;
       case 'connectTo':
-      var found = false;
+        var found = false;
+        var alreadyConnected = false;
+        for(i in connectedDevices) {
+          if(i == payload.data.deviceId && connectedDevices[i].peripheral.advertisement.localName == payload.data.localName) {
+            alreadyConnected = true;
+          }
+        }
+        if (alreadyConnected) {
+          console.log("Device " + payload.data.localName + " is already connected.");
+          deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is already connected."}));
+        }
         for(i in currentDiscoveredDevices) {
           if(currentDiscoveredDevices[i].address.replace(/:/g, '') == payload.data.deviceId && currentDiscoveredDevices[i].advertisement.localName == payload.data.localName) {
             console.log("[BLE] Connecting to device " + payload.data.localName + " with id " + payload.data.deviceId + "...");

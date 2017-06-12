@@ -159,7 +159,9 @@ deviceClient.on('connect', function () {
            break;
         }
         peripheral = targetDevice.peripheral;
+        console.log("peiod before "+ typeof peiord + " value: "+ period);
         var period = parseFloat(payload.data.value)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
+        console.log("period change period type "+ typeof period+ "value : "+ period);
         var targetSensor = targetDevice[payload.data.sensor];
         setPeriod(targetSensor, period, peripheral);
     }
@@ -307,6 +309,7 @@ function setPeriod(char, period, peripheral){
 function turnWeatherSensorOn(peripheral){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
+    console.log("writing to weathersensor on char : "+ onValue);////////////////////////////////////
     thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
     	if (!err) {
         deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
@@ -394,10 +397,12 @@ function turnSensorOff(peripheral, char) {
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     characteristic = thisPeripheral[char];
     char = char.substring(0, char.indexOf("OnChar")-1);
+    console.log("turning off char : "+char );
     if(characteristic != null) {
       console.log("Turning off sensor");
+      console.log("writing to weathersensor off char : "+ offValue);//////////////////
       characteristic.write(offValue, false, function(err) {
-        console.log("sensor collback. err: "+ err);
+        console.log("sensor collback. err: "+ err);////////////////////////////
         if (!err) {
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The " + char + " sensor of " + peripheral.advertisement.localName + " has been turned off successfully!"}));
         }

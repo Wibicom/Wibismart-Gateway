@@ -159,7 +159,7 @@ deviceClient.on('connect', function () {
            break;
         }
         peripheral = targetDevice.peripheral;
-        var period = payload.data.value*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
+        var period = parseFloat(payload.data.value)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
         var targetSensor = targetDevice[payload.data.sensor];
         setPeriod(targetSensor, period, peripheral);
     }
@@ -290,7 +290,7 @@ function connectToEnviro(peripheral) {
 function setPeriod(char, period, peripheral){
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
-    console.log("writing period: " + period);///////////////////////////////////////////////////::
+    console.log("writing period: " + period);
     char.write(periodBuf, false, function(err) {
       console.log("period callback. err: "+err);
       if(err) {//I dont think these print because callback is printed but no messages.

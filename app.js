@@ -184,7 +184,7 @@ deviceClient.on('connect', function () {
             else {
               var out = {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "connected", };
               for(i in targetDevice) {
-                if(i != "peripheral" && i != "rssi" && i.indexOf("DataChar") < 0 && i.indexOf("OnChar") < 0) {
+                if(i != "peripheral" && i != "rssi" && i.indexOf("DataChar") < 0 && i.indexOf("OnChar") < 0 && i.indexOf("PeriodChar") < 0) {
                   out[i] = targetDevice[i];
                 }
               }
@@ -224,6 +224,8 @@ function connectToEnviro(peripheral) {
 
       peripheral.once('disconnect', function() {
         // handle the disconnection event of the peripheral
+        var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+        clearTimeout(thisPeripheral.rssi);
         connectedDevices[peripheral.address.replace(/:/g, '')] = null;
         console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");
         console.log('      Attempting to reconnect ...');
@@ -303,13 +305,11 @@ function connectToEnviro(peripheral) {
             }
 
             //sending Rssi information periodically every 3 seconds;
-            setInterval(function() {
+            thisPeripheral.rssi = setInterval(function() {
               peripheral.updateRssi(function(err, rssi) {
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"d" : { "rssi" : ' + rssi + ' }}');
 
-              //keep looking for more enviros
-              noble.startScanning();
             });
             }, 3000);
         });

@@ -111,6 +111,7 @@ deviceClient.on('connect', function () {
         if (alreadyConnected) {
           console.log("Device " + payload.data.localName + " is already connected.");
           deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is already connected."}));
+          break;
         }
         for(i in currentDiscoveredDevices) {
           if(currentDiscoveredDevices[i].address.replace(/:/g, '') == payload.data.deviceId && currentDiscoveredDevices[i].advertisement.localName == payload.data.localName) {

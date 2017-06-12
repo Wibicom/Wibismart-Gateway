@@ -162,7 +162,7 @@ deviceClient.on('connect', function () {
         var period = payload.data.value;
         period = parseFloat(period)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
         var targetSensor = targetDevice[payload.data.sensor];
-        setPeriod(targetSensor, period, peripheral);
+        setPeriod(targetSensor, period, peripheral, payload.data.sensor.substring(0, payload.data.sensor.indexOf("PeriodChar")));
         break;
       case 'getter':
         switch(payload.data.type) {
@@ -170,12 +170,26 @@ deviceClient.on('connect', function () {
             var out = [];
             for(i in connectedDevices) {
               var tempObj = {};
-              tempObj.localName = connectedDevices[i].advertisement.localName;
-              tempObj.id = i;
+              tempObj.localName = connectedDevices[i].peripheral.advertisement.localName;
+              tempObj.deviceId = i;
               out.push(tempObj);
             }
             deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: out}));
             break;
+          case 'deviceInfo':
+            var targetDevice = connectedDevices[payload.data.deviceId];
+            if(targetDevice == undefined || targetDevice == null) {
+              deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "disconnected"}}));
+            }
+            else {
+              var out = {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "connected", };
+              for(i in targetDevice) {
+                if(i != "peripheral" && i != "rssi") {
+                  out[i] = targetDevice[i];
+                }
+              }
+              deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: out}));
+            }
         }
     }
   });
@@ -280,9 +294,9 @@ function connectToEnviro(peripheral) {
               turnAccelSensorOn(peripheral, true);
               turnLightSensorOn(peripheral, true);
               turnBatteryReadOn(peripheral, true);
-              setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral);
-              setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral);
-              setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral);
+              setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral, "accel");
+              setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral, "weather");
+              setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral, "light");
             }
             else {
               console.log('[BLE] missing characteristics');
@@ -302,16 +316,18 @@ function connectToEnviro(peripheral) {
     })
 }
 
-function setPeriod(char, period, peripheral){
+function setPeriod(char, period, peripheral, charName){
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
     char.write(periodBuf, false, function(err) {
       if(err) {//I dont think these print because callback is printed but no messages.
-        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10 + " seconds."}));
+        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10 + " seconds."}));
         throw err;
       }
       else {
-        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of sensor on " + peripheral.advertisement.localName + " was successfully set to " + period/10 + " seconds."}));
+        var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+        thisPeripheral[charName+"period"] = period/10;
+        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " was successfully set to " + period/10 + " seconds."}));
       }
     });
 }
@@ -322,6 +338,7 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
     // Turn on weather sensor and subsribe to it
     thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
     	if (!err) {
+        thisPeripheral.weatherSensorOn = true;
         deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
     		if(first) {
           thisPeripheral.weatherDataChar.on('data', function(data, isNotification) {
@@ -348,6 +365,7 @@ function turnAccelSensorOn(peripheral, first){
     // Turn on accelerometer sensor and subsribe to it
     thisPeripheral.accelOnChar.write(onValue, false, function(err) {
     	if (!err) {
+        thisPeripheral.accelSensorOn = true;
         deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Accelerometer of " + peripheral.advertisement.localName + " has connected successfully!"}));
     		if(first) {
           thisPeripheral.accelDataChar.on('data', function(data, isNotification) {
@@ -374,6 +392,7 @@ function turnLightSensorOn(peripheral, first){
     // Turn on accelerometer sensor and subsribe to it
     thisPeripheral.lightOnChar.write(onValue, false, function(err) {
     	if (!err) {
+        thisPeripheral.lightSensorOn = true;
         deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
     		if(first) {
           thisPeripheral.lightDataChar.on('data', function(data, isNotification) {
@@ -417,6 +436,7 @@ function turnSensorOff(peripheral, char) {
     if(characteristic != null) {
       characteristic.write(offValue, false, function(err) {
         if (!err) {
+          thisPeripheral[char+"sensorOn"] = false;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The " + char + " sensor of " + peripheral.advertisement.localName + " has been turned off successfully!"}));
         }
         else {

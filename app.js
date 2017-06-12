@@ -79,6 +79,7 @@ deviceClient.on('connect', function () {
   deviceClient.subscribeToGatewayCommand("connectTo");
   deviceClient.subscribeToGatewayCommand("sensorToggle");
   deviceClient.subscribeToGatewayCommand("sensorPeriod");
+  deviceClient.subscribeToGatewayCommand("getter");
   deviceClient.on('command', function(type, id, commandName, commandFormat, payload, topic) {
     console.log("Recieved command " +commandName);
     payload = payload.toString('utf8');
@@ -162,6 +163,20 @@ deviceClient.on('connect', function () {
         period = parseFloat(period)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
         var targetSensor = targetDevice[payload.data.sensor];
         setPeriod(targetSensor, period, peripheral);
+        break;
+      case 'getter':
+        switch(payload.data.type) {
+          case 'connectedDevices':
+            var out = [];
+            for(i in connectedDevices) {
+              var tempObj = {};
+              tempObj.localName = connectedDevices[i].advertisement.localName;
+              tempObj.id = i;
+              out.push(tempObj);
+            }
+            deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: out}));
+            break;
+        }
     }
   });
 
@@ -261,10 +276,10 @@ function connectToEnviro(peripheral) {
                 thisPeripheral.accelPeriodChar &&
                 thisPeripheral.lightPeriodChar &&
                 thisPeripheral.batteryDataChar) {
-              turnWeatherSensorOn(peripheral);
-              turnAccelSensorOn(peripheral);
+              turnWeatherSensorOn(peripheral, true);
+              turnAccelSensorOn(peripheral, true);
               turnLightSensorOn(peripheral, true);
-              turnBatteryReadOn(peripheral);
+              turnBatteryReadOn(peripheral, true);
               setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral);
               setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral);
               setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral);
@@ -302,13 +317,14 @@ function setPeriod(char, period, peripheral){
 }
 
 
-function turnWeatherSensorOn(peripheral){
+function turnWeatherSensorOn(peripheral, first){ // the first variable determined if it is the first time that this is called to prevent to have double data sent when the sensor is tured off then back on.
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
     thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
     	if (!err) {
         deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
-    		thisPeripheral.weatherDataChar.on('data', function(data, isNotification) {
+    		if(first) {
+          thisPeripheral.weatherDataChar.on('data', function(data, isNotification) {
             	
             var temperature = ((data.readUInt8(2) * 0x10000 + data.readUInt8(1) * 0x100 + data.readUInt8(0)) / 100.0).toFixed(1);
         		var pressure = ((data.readUInt8(5) * 0x10000 + data.readUInt8(4) * 0x100 + data.readUInt8(3)) / 100.0).toFixed(1);
@@ -316,6 +332,7 @@ function turnWeatherSensorOn(peripheral){
         		console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Weather Data : { Temperature : ' + temperature + ' C, Pressure : ' + pressure + ' mbar, Humidity: ' + humidity + ' % }');
             deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"d" : { "temperature" : ' + temperature + ', "pressure" : ' + pressure + ', "humidity" : ' + humidity + ' }}');
           });
+        }
 
     		thisPeripheral.weatherDataChar.subscribe(function(err) {
            		if(!err){
@@ -326,13 +343,14 @@ function turnWeatherSensorOn(peripheral){
     })
 }
 
-function turnAccelSensorOn(peripheral){
+function turnAccelSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on accelerometer sensor and subsribe to it
     thisPeripheral.accelOnChar.write(onValue, false, function(err) {
     	if (!err) {
         deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Accelerometer of " + peripheral.advertisement.localName + " has connected successfully!"}));
-    		thisPeripheral.accelDataChar.on('data', function(data, isNotification) {
+    		if(first) {
+          thisPeripheral.accelDataChar.on('data', function(data, isNotification) {
 
             var accelX = ((data.readInt8(1) * 0x100 + data.readInt8(0)) * 0.488).toFixed(0);
         		var accelY = ((data.readInt8(3) * 0x100 + data.readInt8(2)) * 0.488).toFixed(0);
@@ -340,6 +358,7 @@ function turnAccelSensorOn(peripheral){
             	console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { X : ' + accelX + ', Y : ' + accelY + ', Z : ' + accelZ + ' }');
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"d" : { "x" : ' + accelX + ', "y" : ' + accelY + ', "z" : ' + accelZ + ' }}');
           });
+        }
 
     		thisPeripheral.accelDataChar.subscribe(function(err) {
            		if(!err){

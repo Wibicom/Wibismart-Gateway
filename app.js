@@ -138,6 +138,7 @@ deviceClient.on('connect', function () {
         else if (payload.data.value == "on") {
           switch(payload.data.sensor) {
             case 'weatherOnChar':
+            console.log("calling sensor on");
               turnWeatherSensorOn(peripheral);
               break;
             case 'accelOnChar':
@@ -292,17 +293,18 @@ function setPeriod(char, period, peripheral){
     periodBuf.writeUInt8(period, 0);
     char.write(periodBuf, false, function(err) {
       if(err) {//I dont think these print because callback is printed but no messages.
-        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10}));
+        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10 + " seconds."}));
         throw err;
       }
       else {
-        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Peiod of sensor on " + peripheral.advertisement.localName + " was successfully set to " + period/10}));
+        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of sensor on " + peripheral.advertisement.localName + " was successfully set to " + period/10 + " seconds."}));
       }
     });
 }
 
 
 function turnWeatherSensorOn(peripheral){
+  console.log("sensor on called");
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
     thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
@@ -392,7 +394,7 @@ function turnSensorOff(peripheral, char) {
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     characteristic = thisPeripheral[char];
     var dataCharacteristic = thisPeripheral[char.replace("On", "Data")];
-    char = char.substring(0, char.indexOf("OnChar")-1);
+    char = char.substring(0, char.indexOf("OnChar"));
     if(characteristic != null) {
       characteristic.write(offValue, false, function(err) {
         if (!err) {

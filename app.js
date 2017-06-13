@@ -185,12 +185,12 @@ deviceClient.on('connect', function () {
               tempObj.deviceId = i;
               out.push(tempObj);
             }
-            deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: out}));
+            deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'connectedDevices', d: out}));
             break;
           case 'deviceInfo':
             var targetDevice = connectedDevices[payload.data.deviceId];
             if(targetDevice == undefined || targetDevice == null) {
-              deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "disconnected"}}));
+              deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'deviceInfo', d: {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "disconnected"}}));
             }
             else {
               var out = {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "connected", };
@@ -199,7 +199,7 @@ deviceClient.on('connect', function () {
                   out[i] = targetDevice[i];
                 }
               }
-              deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({d: out}));
+              deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'deviceInfo', d: out}));
             }
         }
     }

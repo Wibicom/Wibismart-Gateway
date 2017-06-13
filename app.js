@@ -447,7 +447,7 @@ function turnSensorOff(peripheral, char) {
     if(characteristic != null) {
       characteristic.write(offValue, false, function(err) {
         if (!err) {
-          thisPeripheral[char+"sensorOn"] = false;
+          thisPeripheral[char+"SensorOn"] = false;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The " + char + " sensor of " + peripheral.advertisement.localName + " has been turned off successfully!"}));
         }
         else {

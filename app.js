@@ -462,6 +462,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
       averageCurrentDraw += (4006 * 3.31 + sleep * (connectionInterval - 3.31))/(connectionInterval * 1000);
     }*/
     var weatherSensorAverageCurrent = averageCurrentDraw * 1000;
+    console.log(weatherSensorAverageCurrent);
     totalAverageCurrentConsumption += weatherSensorAverageCurrent;
   }
 
@@ -474,6 +475,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
       averageCurrentDraw += (3600 * 2.44 + sleep * (connectionInterval - 2.44))/(connectionInterval * 1000);
     }*/
     var lightSensorAverageCurrent = averageCurrentDraw * 1000;
+    console.log(lightSensorAverageCurrent);
     totalAverageCurrentConsumption += lightSensorAverageCurrent;
   }
 
@@ -492,11 +494,13 @@ function calculateBatteryLife(batt, thisPeripheral) {
     }
     var averageCurrentDraw = (3065 * 1.18 + sleep * (bmaPeriod * 1000 - 1.18))/(bmaPeriod)/1000;
     var accelSensorAverageCurrent = averageCurrentDraw * 1000;
+    console.log(accelSensorAverageCurrent);
     totalAverageCurrentConsumption += accelSensorAverageCurrent;
   }
 
   var averageCurrentDraw = (1450 * 2.5 + sleep * (batteryPeriod * 1000 - 2.5))/(batteryPeriod * 1000 * 1000);
   var batteryAverageCurrent = averageCurrentDraw * 1000;
+  console.log(batteryAverageCurrent);
   totalAverageCurrentConsumption += batteryAverageCurrent;
 
   if(connectionInterval < 1500) {
@@ -505,12 +509,13 @@ function calculateBatteryLife(batt, thisPeripheral) {
   else {
     var averageCurrentDraw = (2760 * 4.31 + sleep * (connectionInterval - 4.31))/(connectionInterval * 1000);
   }
-  var batteryAverageCurrent = averageCurrentDraw * 1000;
-  totalAverageCurrentConsumption += batteryAverageCurrent;
+  var connectionAverageCurrent = averageCurrentDraw * 1000;
+  totalAverageCurrentConsumption += connectionAverageCurrent;
 
 
   var batteryNominalCapacity = 11; //hardcoded
   var supplyVoltage = 3 * batt / 100;
+  console.log(supplyVoltage);
   var difference = 3 - supplyVoltage;
   var batterylevel = 1 + (supplyVoltage - 3);
   var batteryCapacity = batteryNominalCapacity * (1 - Math.pow(difference, 2*batterylevel));

@@ -491,7 +491,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
       var bmaPeriod = 1000;
     }
     var averageCurrentDraw = (3065 * 1.18 + sleep * (bmaPeriod * 1000 - 1.18))/(bmaPeriod)/1000;
-    var acclSensorAverageCurrent = averageCurrentDraw * 1000;
+    var accelSensorAverageCurrent = averageCurrentDraw * 1000;
     totalAverageCurrentConsumption += accelSensorAverageCurrent;
   }
 

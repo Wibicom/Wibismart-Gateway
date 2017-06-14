@@ -492,7 +492,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
     else {
       var bmaPeriod = 1000;
     }
-    var averageCurrentDraw = (3065 * 1.18 + sleep * (bmaPeriod * 1000 - 1.18))/(bmaPeriod)/1000;
+    var averageCurrentDraw = (3065 * 1.18 + sleep * (bmaPeriod - 1.18))/(bmaPeriod)/1000;
     var accelSensorAverageCurrent = averageCurrentDraw * 1000;
     console.log(accelSensorAverageCurrent);
     totalAverageCurrentConsumption += accelSensorAverageCurrent;
@@ -510,6 +510,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
     var averageCurrentDraw = (2760 * 4.31 + sleep * (connectionInterval - 4.31))/(connectionInterval * 1000);
   }
   var connectionAverageCurrent = averageCurrentDraw * 1000;
+  console.log(connectionAverageCurrent);
   totalAverageCurrentConsumption += connectionAverageCurrent;
 
 

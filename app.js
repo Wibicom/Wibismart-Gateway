@@ -439,6 +439,7 @@ function turnBatteryReadOn(peripheral){
             console.log(batteryLife);
             batterylife = Math.round(batteryLife * 100)/100; // rounds to two decimal places
             console.log(batteryLife);
+            console.log(Math.round(4.433));
             console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
             deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');
         });

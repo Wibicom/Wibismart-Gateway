@@ -435,7 +435,8 @@ function turnBatteryReadOn(peripheral){
       var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
       thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
             var batteryLevel = data.readUInt8(0);
-            console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Level : ' + batteryLevel + ' %');
+            var batteryLife = calculateBatteryLife(batteryLevel, batterythisPeripheral);
+            console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Level : ' + batteryLevel + ' % , battery life: ' +batteryLife);
             deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ' }}');
         });
 
@@ -444,6 +445,62 @@ function turnBatteryReadOn(peripheral){
               console.log("[BLE] ", peripheral.advertisement.localName, " Battery level notification on");
             }
           });
+}
+
+function calculateBatteryLife(batt, thisPeripheral) {
+  var connectionInterval = 100; //hardcoded
+
+  var totalAverageCurrentConsumption = 0;
+  if(thisPeripheral.weatherSensorOn = true) {
+    var averageCurrentDraw = (3198 * 2.93 + sleep * (thisPeripheral.weatherperiod * 1000 - 2.93))/(thisPeripheral.weatherperiod * 1000 * 1000);
+    /*if(connectionInterval < 1500) {
+      averageCurrentDraw += (4299 * 2.9 + sleep * (connectionInterval - 2.9))/(connectionInterval * 1000);
+    }
+    else {
+      averageCurrentDraw += (4006 * 3.31 + sleep * (connectionInterval - 3.31))/(connectionInterval * 1000);
+    }*/
+    var weatherSensorAverageCurrent = averageCurrentDraw * 1000;
+    totalAverageCurrentConsumption += weatherSensorAverageCurrent;
+  }
+
+  if(thisPeripheral.lightSensorOn = true) {
+    var averageCurrentDraw = (1624 * 6.81 + sleep * (thisPeripheral.lightperiod * 1000 - 6.81))/(thisPeripheral.lightperiod * 1000 * 1000);
+    /*if(connectionInterval < 1500) {
+      averageCurrentDraw += (3764 * 2.69 + sleep * (connectionInterval - 2.69))/(connectionInterval * 1000);
+    }
+    else {
+      averageCurrentDraw += (3600 * 2.44 + sleep * (connectionInterval - 2.44))/(connectionInterval * 1000);
+    }*/
+    var lightSensorAverageCurrent = averageCurrentDraw * 1000;
+    totalAverageCurrentConsumption += lightSensorAverageCurrent;
+  }
+
+  if(thisPeripheral.accelSensorOn = true) {
+    if (thisPeripheral.accelperiod < 0.1) {
+      var bmaPeriod = 50;
+    }
+    else if (thisPeripheral.accelperiod >= 0.1 && thisPeripheral.accelperiod < 500) {
+      var bmaPeriod = 100;
+    }
+    else if (thisPeripheral.accelperiod >= 500 && thisPeripheral.accelperiod < 1000) {
+      var bmaPeriod = 500;
+    }
+    else {
+      var bmaPeriod = 1000;
+    }
+    var averageCurrentDraw = (3065 * 1.18 + sleep * (bmaPeriod * 1000 - 1.18))/(bmaPeriod)/1000;
+    var acclSensorAverageCurrent = averageCurrentDraw * 1000;
+    totalAverageCurrentConsumption += accelSensorAverageCurrent;
+  }
+
+
+  var batteryNominalCapacity = 11; //hardcoded
+  var supplyVoltage = 3 * batt / 100;
+  var difference = 3 - supplyVoltage;
+  var batterylevel = 1 + (supplyVoltage - 3);
+  var batteryCapacity = batteryNominalCapacity * (1 - Math.pow(difference, 2*batterylevel));
+  var batteryLife = batteryCapacity/(totalAverageCurrentConsumption/1000);
+  return batteryLife;
 }
 
 

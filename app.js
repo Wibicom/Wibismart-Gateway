@@ -180,10 +180,12 @@ deviceClient.on('connect', function () {
           case 'connectedDevices':
             var out = [];
             for(i in connectedDevices) {
-              var tempObj = {};
-              tempObj.localName = connectedDevices[i].peripheral.advertisement.localName;
-              tempObj.deviceId = i;
-              out.push(tempObj);
+              if(connectedDevices[i] != null) {
+                var tempObj = {};
+                tempObj.localName = connectedDevices[i].peripheral.advertisement.localName;
+                tempObj.deviceId = i;
+                out.push(tempObj);
+              }
             }
             deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'connectedDevices', d: out}));
             break;

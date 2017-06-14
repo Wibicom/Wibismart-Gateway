@@ -436,8 +436,9 @@ function turnBatteryReadOn(peripheral){
       thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
             var batteryLevel = data.readUInt8(0);
             var batteryLife = calculateBatteryLife(batteryLevel, thisPeripheral);
-            console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Level : ' + batteryLevel + ' % , battery life: ' +batteryLife);
-            deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ' }}');
+            batterylife = Math.round(batteryLife * 100)/100; // rounds to two decimal places
+            console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
+            deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');
         });
 
       thisPeripheral.batteryDataChar.subscribe(function(err) {
@@ -462,7 +463,6 @@ function calculateBatteryLife(batt, thisPeripheral) {
       averageCurrentDraw += (4006 * 3.31 + sleep * (connectionInterval - 3.31))/(connectionInterval * 1000);
     }*/
     var weatherSensorAverageCurrent = averageCurrentDraw * 1000;
-    console.log(weatherSensorAverageCurrent);
     totalAverageCurrentConsumption += weatherSensorAverageCurrent;
   }
 
@@ -475,7 +475,6 @@ function calculateBatteryLife(batt, thisPeripheral) {
       averageCurrentDraw += (3600 * 2.44 + sleep * (connectionInterval - 2.44))/(connectionInterval * 1000);
     }*/
     var lightSensorAverageCurrent = averageCurrentDraw * 1000;
-    console.log(lightSensorAverageCurrent);
     totalAverageCurrentConsumption += lightSensorAverageCurrent;
   }
 
@@ -494,13 +493,11 @@ function calculateBatteryLife(batt, thisPeripheral) {
     }
     var averageCurrentDraw = (3065 * 1.18 + sleep * (bmaPeriod - 1.18))/(bmaPeriod)/1000;
     var accelSensorAverageCurrent = averageCurrentDraw * 1000;
-    console.log(accelSensorAverageCurrent);
     totalAverageCurrentConsumption += accelSensorAverageCurrent;
   }
 
   var averageCurrentDraw = (1450 * 2.5 + sleep * (batteryPeriod * 1000 - 2.5))/(batteryPeriod * 1000 * 1000);
   var batteryAverageCurrent = averageCurrentDraw * 1000;
-  console.log(batteryAverageCurrent);
   totalAverageCurrentConsumption += batteryAverageCurrent;
 
   if(connectionInterval < 1500) {
@@ -510,13 +507,11 @@ function calculateBatteryLife(batt, thisPeripheral) {
     var averageCurrentDraw = (2760 * 4.31 + sleep * (connectionInterval - 4.31))/(connectionInterval * 1000);
   }
   var connectionAverageCurrent = averageCurrentDraw * 1000;
-  console.log(connectionAverageCurrent);
   totalAverageCurrentConsumption += connectionAverageCurrent;
 
 
   var batteryNominalCapacity = 11; //hardcoded
   var supplyVoltage = 3 * batt / 100;
-  console.log(supplyVoltage);
   var difference = 3 - supplyVoltage;
   var batterylevel = 1 + (supplyVoltage - 3);
   var batteryCapacity = batteryNominalCapacity * (1 - Math.pow(difference, 2*batterylevel));

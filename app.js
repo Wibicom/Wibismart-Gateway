@@ -450,6 +450,7 @@ function turnBatteryReadOn(peripheral){
 function calculateBatteryLife(batt, thisPeripheral) {
   var connectionInterval = 100; //hardcoded
   var batteryPeriod = 15; //hardcoded
+  var sleep = 1.8; // hardcoded
 
   var totalAverageCurrentConsumption = 0;
   if(thisPeripheral.weatherSensorOn = true) {

@@ -8,7 +8,7 @@
 * Authentication Method : token
 * Authentication Token : u!lTBzeWYJ1Bd!fC)Q
 */
-
+setTimeout(function() {
 
 var noble = require('noble');
 var Client = require('ibmiotf');
@@ -542,3 +542,5 @@ function turnSensorOff(peripheral, char) {
           	});
     }
 }
+
+}, 20000);

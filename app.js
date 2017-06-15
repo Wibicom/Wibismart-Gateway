@@ -543,4 +543,4 @@ function turnSensorOff(peripheral, char) {
     }
 }
 
-}, 20000);
+}, 120000);

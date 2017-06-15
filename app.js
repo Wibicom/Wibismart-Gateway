@@ -8,7 +8,8 @@
 * Authentication Method : token
 * Authentication Token : u!lTBzeWYJ1Bd!fC)Q
 */
-console.log("sanity");
+
+
 var noble = require('noble');
 var Client = require('ibmiotf');
 
@@ -48,6 +49,7 @@ onValue.writeUInt8(0x01, 0);
 var offValue = new Buffer(1);
 offValue.writeUInt8(0x00, 0);
 
+setTimeout(function() {
 var mqttConfig = {
     "org" : "4rxa4d",
     "id" : "506583dd5c62",
@@ -60,7 +62,7 @@ var mqttConfig = {
 var deviceClient = new Client.IotfGateway(mqttConfig);
 
 // Called when noble is ready
-noble.on('stateChange', function(state) {
+/*noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
   	console.log('[MQTT] Connecting...');
   	deviceClient.connect();
@@ -69,7 +71,10 @@ noble.on('stateChange', function(state) {
     console.log("Stop scanning");
     noble.stopScanning();
   }
-})
+})*/
+console.log('[MQTT] Connecting...');
+deviceClient.connect();
+
 
 deviceClient.on('connect', function () {
   //publishing event using the default quality of service
@@ -541,3 +546,5 @@ function turnSensorOff(peripheral, char) {
           	});
     }
 }
+
+}, 90000);

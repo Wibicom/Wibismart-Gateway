@@ -8,7 +8,7 @@
 * Authentication Method : token
 * Authentication Token : u!lTBzeWYJ1Bd!fC)Q
 */
-
+console.log("sanity");
 var noble = require('noble');
 var Client = require('ibmiotf');
 

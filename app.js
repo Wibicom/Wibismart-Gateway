@@ -65,8 +65,7 @@ var mqttConfig = {
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
-deviceClient.connect();
-console.log(noble);
+
 // Called when noble is ready
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {

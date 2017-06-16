@@ -65,19 +65,18 @@ var deviceClient = new Client.IotfGateway(mqttConfig);
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
   	console.log('[MQTT] Connecting...');
-  	deviceClient.connect();
+    deviceClient.connect();
   }
   else {
     console.log("Stop scanning");
     noble.stopScanning();
   }
 })
-//console.log('[MQTT] Connecting...');
-//deviceClient.connect();
-setTimeout(function() {
-  console.log(noble.state);
-}, 30000);
 
+if(noble.state == 'poweredOn') {
+  console.log('[MQTT] Connecting...');
+  deviceClient.connect();
+}
 
 deviceClient.on('connect', function () {
   //publishing event using the default quality of service

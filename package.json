@@ -1,0 +1,25 @@
+{
+  "name": "wibismart-gateway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "ibmiotf": "^0.2.37",
+    "mqtt": "^2.8.2",
+    "noble": "^1.8.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wibicom/Wibismart-Gateway.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Wibicom/Wibismart-Gateway/issues"
+  },
+  "homepage": "https://github.com/Wibicom/Wibismart-Gateway#readme"
+}

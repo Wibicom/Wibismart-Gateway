@@ -59,7 +59,7 @@ var mqttConfig = {
     "auth-token" : "rGpBk2iF?tMG*PSznn"
 };
 
-//var deviceClient = new Client.IotfGateway(mqttConfig);
+var deviceClient = new Client.IotfGateway(mqttConfig);
 
 // Called when noble is ready
 noble.on('stateChange', function(state) {

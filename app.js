@@ -141,13 +141,28 @@ deviceClient.on('connect', function () {
         if(payload.data.value == "off") {
           switch(payload.data.sensor) {
             case 'weatherOnChar':
-              turnSensorOff(peripheral, payload.data.sensor);
+              if (targetDevice.weatherDataChar && targetDevice.weatherChar) {
+                  turnSensorOff(peripheral, payload.data.sensor);
+              }
+              else {
+                deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " does not have a weather sensor, you therefore cannot toggle it."}));
+              }
               break;
             case 'accelOnChar':
-              turnSensorOff(peripheral, payload.data.sensor);
+              if (targetDevice.accelDataChar && targetDevice.accelOnChar) {
+                  turnSensorOff(peripheral, payload.data.sensor);
+              }
+              else {
+                deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " does not have an accelerometer, you therefore cannot toggle it."}));
+              }
               break;
             case 'lightOnChar':
-              turnSensorOff(peripheral, payload.data.sensor);
+              if (targetDevice.lightDataChar && targetDevice.lightOnChar) {
+                turnSensorOff(peripheral, payload.data.sensor);
+              }
+              else {
+                deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " does not have a light sensor, you therefore cannot toggle it."}));
+              }
               break;
             default:
               break;
@@ -156,10 +171,10 @@ deviceClient.on('connect', function () {
         else if (payload.data.value == "on") {
           switch(payload.data.sensor) {
             case 'weatherOnChar':
-              turnWeatherSensorOn(peripheral);
+              turnWeatherSensorOn(peripheral, false);
               break;
             case 'accelOnChar':
-              turnAccelSensorOn(peripheral);
+              turnAccelSensorOn(peripheral, false);
               break;
             case 'lightOnChar':
               turnLightSensorOn(peripheral, false);
@@ -179,7 +194,9 @@ deviceClient.on('connect', function () {
         var period = payload.data.value;
         period = parseFloat(period)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
         var targetSensor = targetDevice[payload.data.sensor];
-        setPeriod(targetSensor, period, peripheral, payload.data.sensor.substring(0, payload.data.sensor.indexOf("PeriodChar")));
+        if (targetSensor) {
+          setPeriod(targetSensor, period, peripheral, payload.data.sensor.substring(0, payload.data.sensor.indexOf("PeriodChar")));
+        }
         break;
       case 'getter':
         switch(payload.data.type) {
@@ -299,28 +316,21 @@ function connectToEnviro(peripheral) {
               }
             })
      
-           // Check to see if we found all of our characteristics.
-            //
-            if (thisPeripheral.weatherOnChar &&
-                thisPeripheral.accelOnChar &&
-                thisPeripheral.lightOnChar && 
-                thisPeripheral.weatherDataChar &&
-                thisPeripheral.accelDataChar &&
-                thisPeripheral.lightDataChar &&
-                thisPeripheral.weatherPeriodChar &&
-                thisPeripheral.accelPeriodChar &&
-                thisPeripheral.lightPeriodChar &&
-                thisPeripheral.batteryDataChar) {
+           // Connects to the characteristics it found
+            if (thisPeripheral.weatherOnChar && thisPeripheral.weatherDataChar && thisPeripheral.weatherPeriodChar) {
               turnWeatherSensorOn(peripheral, true);
-              turnAccelSensorOn(peripheral, true);
-              turnLightSensorOn(peripheral, true);
-              turnBatteryReadOn(peripheral, true);
-              setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral, "accel");
               setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral, "weather");
+            }
+            if (thisPeripheral.accelOnChar && thisPeripheral.accelDataChar && thisPeripheral.accelPeriodChar) {
+              turnAccelSensorOn(peripheral, true);
+              setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral, "accel");
+            }
+            if (thisPeripheral.lightOnChar && thisPeripheral.lightDataChar && thisPeripheral.lightPeriodChar) {
+              turnLightSensorOn(peripheral, true);
               setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral, "light");
             }
-            else {
-              console.log('[BLE] missing characteristics');
+            if (thisPeripheral.batteryDataChar) {
+              turnBatteryReadOn(peripheral, true);
             }
 
             //sending Rssi information periodically every 3 seconds;

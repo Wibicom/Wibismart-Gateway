@@ -65,7 +65,8 @@ var mqttConfig = {
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
-
+deviceClient.connect();
+console.log(noble);
 // Called when noble is ready
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
@@ -171,6 +172,14 @@ deviceClient.on('connect', function () {
                 deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " does not have a light sensor, you therefore cannot toggle it."}));
               }
               break;
+            case 'CO2OnChar':
+              if (targetDevice.CO2DataChar && targetDevice.CO2OnChar) {
+                turnSensorOff(peripheral, payload.data.sensor);
+              }
+              else {
+                deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " does not have a CO2 sensor, you therefore cannot toggle it."}));
+              }
+              break;
             default:
               break;
           }
@@ -186,6 +195,8 @@ deviceClient.on('connect', function () {
             case 'lightOnChar':
               turnLightSensorOn(peripheral, false);
               break;
+            case 'CO2OnChar':
+              turnCO2SensorOn(peripheral, false);
             default:
               break;
           }
@@ -338,31 +349,34 @@ function connectToEnviro(peripheral) {
               setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral, "weather");
             }
             else {
-              console.log("weather service not found");
+              console.log("[BLE] ", peripheral.advertisement.localName, " Weather service not found");
             }
             if (thisPeripheral.accelOnChar && thisPeripheral.accelDataChar && thisPeripheral.accelPeriodChar) {
               turnAccelSensorOn(peripheral, true);
               setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral, "accel");
             }
             else {
-              console.log("accel service not found");
+              console.log("[BLE] ", peripheral.advertisement.localName, " Accelerometer service not found");
             }
             if (thisPeripheral.lightOnChar && thisPeripheral.lightDataChar && thisPeripheral.lightPeriodChar) {
               turnLightSensorOn(peripheral, true);
               setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral, "light");
             }
             else {
-              console.log("light service not found");
+              console.log("[BLE] ", peripheral.advertisement.localName, " Light service not found");
             }
             if(thisPeripheral.CO2OnChar && thisPeripheral.CO2DataChar && thisPeripheral.CO2PeriodChar) {
               turnCO2SensorOn(peripheral, true);
               setPeriod(thisPeripheral.CO2PeriodChar, 30, peripheral, "CO2");
             }
+            else {
+              console.log("[BLE] ", peripheral.advertisement.localName, " CO2 service not found");
+            }
             if (thisPeripheral.batteryDataChar) {
               turnBatteryReadOn(peripheral, true);
             }
             else {
-              console.log("battery service not found");
+              console.log("[BLE] ", peripheral.advertisement.localName, " Battery service not found");
             }
 
             //sending Rssi information periodically every 3 seconds;

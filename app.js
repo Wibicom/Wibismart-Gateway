@@ -16,8 +16,9 @@ var Client = require('ibmiotf');
 var weatherServiceUuid = 'aa40';
 var accelServiceUuid = 'aa80';
 var lightServiceUuid = 'aa20';
+var CO2ServiceUuid = 'aa10';
 var batteryServiceUuid = '180f';
-var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, batteryServiceUuid];
+var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, CO2ServiceUuid ,batteryServiceUuid];
 
 var weatherDataCharUuid = 'aa41';
 var weatherOnCharUuid = 'aa42';
@@ -32,6 +33,10 @@ var accelPeriodCharUuid = 'aa83';
 var lightDataCharUuid = 'aa21';
 var lightOnCharUuid = 'aa22';
 var lightPeriodCharUuid = 'aa23';
+
+var CO2DataCharUuid = 'aa11';
+var CO2OnCharUuid = 'aa12'
+var CO2PeriodCharUuid = 'aa14';
 
 
 var batteryDataCharUuid = '2a19';
@@ -295,6 +300,9 @@ function connectToEnviro(peripheral) {
               else if (lightOnCharUuid == characteristic.uuid) {
                 thisPeripheral.lightOnChar = characteristic;
               }
+              else if (CO2OnCharUuid == characteristic.uuid) {
+                thisPeripheral.CO2OnChar = characteristic;
+              }
               else if (weatherDataCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherDataChar = characteristic;
               }
@@ -303,7 +311,10 @@ function connectToEnviro(peripheral) {
               }
               else if (lightDataCharUuid == characteristic.uuid) {
                 thisPeripheral.lightDataChar = characteristic;
-              } 
+              }
+              else if (CO2DataCharUuid == characteristic.uuid) {
+                thisPeripheral.CO2DataChar = characteristic;
+              }
               else if (weatherPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherPeriodChar = characteristic;
               }
@@ -312,6 +323,9 @@ function connectToEnviro(peripheral) {
               }
               else if (lightPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.lightPeriodChar = characteristic;
+              }
+              else if (CO2PeriodCharUuid == characteristic.uuid) {
+                thisPeripheral.CO2PeriodChar = characteristic;
               }
               else if (batteryDataCharUuid == characteristic.uuid) {
                 thisPeripheral.batteryDataChar = characteristic;
@@ -339,6 +353,10 @@ function connectToEnviro(peripheral) {
             }
             else {
               console.log("light service not found");
+            }
+            if(thisPeripheral.CO2OnChar && thisPeripheral.CO2DataChar && thisPeripheral.CO2PeriodChar) {
+              turnCO2SensorOn(peripheral, true);
+              setPeriod(thisPeripheral.CO2PeriodChar, 30, peripheral, "CO2");
             }
             if (thisPeripheral.batteryDataChar) {
               turnBatteryReadOn(peripheral, true);
@@ -436,7 +454,7 @@ function turnAccelSensorOn(peripheral, first){
 
 function turnLightSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
-    // Turn on accelerometer sensor and subsribe to it
+    // Turn on light sensor and subsribe to it
     thisPeripheral.lightOnChar.write(onValue, false, function(err) {
     	if (!err) {
         thisPeripheral.lightSensorOn = true;
@@ -460,6 +478,37 @@ function turnLightSensorOn(peripheral, first){
     })
 }
 
+function turnCO2SensorOn(peripheral, first){
+    var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+    // Turn on CO2 sensor and subsribe to it
+    thisPeripheral.CO2OnChar.write(onValue, false, function(err) {
+    	if (!err) {
+        thisPeripheral.CO2SensorOn = true;
+        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "CO2 sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
+    		if(first) {
+          thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {//4 0-4 1-2 3-msb x 256 3-lsb
+            	var CO2Level = data.readUInt8(2) * 0x100 + data.readUInt8(3);
+              if (data.readUInt8(0) == 4 && data.readUInt8(1) == 2) { // this check is to make sure that the value sent by the enviro is correct.
+                if (CO2Level != 0) {
+            	    console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
+            	    deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"d" : { "CO2" : ' + CO2Level + ' }}');
+                }
+              }
+              else {
+                console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : error');
+              }
+              
+          });
+        }
+
+    		thisPeripheral.CO2DataChar.subscribe(function(err) {
+           		if(!err){
+           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to CO2");
+           		}
+          	});
+    	}
+    })
+}
 
 function turnBatteryReadOn(peripheral){
       var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];

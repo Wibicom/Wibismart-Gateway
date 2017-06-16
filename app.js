@@ -59,10 +59,10 @@ var mqttConfig = {
     "auth-token" : "rGpBk2iF?tMG*PSznn"
 };
 
-var deviceClient = new Client.IotfGateway(mqttConfig);
+//var deviceClient = new Client.IotfGateway(mqttConfig);
 
 // Called when noble is ready
-/*noble.on('stateChange', function(state) {
+noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
   	console.log('[MQTT] Connecting...');
   	deviceClient.connect();
@@ -71,9 +71,12 @@ var deviceClient = new Client.IotfGateway(mqttConfig);
     console.log("Stop scanning");
     noble.stopScanning();
   }
-})*/
-console.log('[MQTT] Connecting...');
-deviceClient.connect();
+})
+//console.log('[MQTT] Connecting...');
+//deviceClient.connect();
+setTimeout(function() {
+  console.log(noble.state);
+}, 30000);
 
 
 deviceClient.on('connect', function () {

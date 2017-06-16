@@ -64,6 +64,7 @@ var deviceClient = new Client.IotfGateway(mqttConfig);
 // Called when noble is ready
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
+    console.log('[Noble] Powered on.');
   	console.log('[MQTT] Connecting...');
     deviceClient.connect();
   }
@@ -74,6 +75,7 @@ noble.on('stateChange', function(state) {
 })
 
 if(noble.state == 'poweredOn') {
+  console.log('[Noble] Already powered on.');
   console.log('[MQTT] Connecting...');
   deviceClient.connect();
 }
@@ -321,16 +323,28 @@ function connectToEnviro(peripheral) {
               turnWeatherSensorOn(peripheral, true);
               setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral, "weather");
             }
+            else {
+              console.log("weather service not found");
+            }
             if (thisPeripheral.accelOnChar && thisPeripheral.accelDataChar && thisPeripheral.accelPeriodChar) {
               turnAccelSensorOn(peripheral, true);
               setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral, "accel");
+            }
+            else {
+              console.log("accel service not found");
             }
             if (thisPeripheral.lightOnChar && thisPeripheral.lightDataChar && thisPeripheral.lightPeriodChar) {
               turnLightSensorOn(peripheral, true);
               setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral, "light");
             }
+            else {
+              console.log("light service not found");
+            }
             if (thisPeripheral.batteryDataChar) {
               turnBatteryReadOn(peripheral, true);
+            }
+            else {
+              console.log("battery service not found");
             }
 
             //sending Rssi information periodically every 3 seconds;
@@ -559,4 +573,4 @@ function turnSensorOff(peripheral, char) {
     }
 }
 
-}, 70000);
+}, 700);

@@ -172,9 +172,11 @@ deviceClient.on('connect', function () {
               clearTimeout(targetDevice.rssi);
               connectedDevices[payload.data.deviceId] = null;
               deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " disconnected successfully."}));
+              console.log(payload.data.localName + "disconnected.");
             }
             else {
               deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " failed to disconnect."}));
+              console.log(payload.data.localName + "failed to disconnect.")
             }
           });
         }
@@ -436,7 +438,7 @@ function connectToEnviro(peripheral) {
             thisPeripheral.rssi = setInterval(function() {
               peripheral.updateRssi(function(err, rssi) {
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
-              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"localName : ' + peripheral.advertisement.localName + ', "d" : { "rssi" : ' + rssi + ' }}');
+              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"localName" : ' + peripheral.advertisement.localName + ', "d" : { "rssi" : ' + rssi + ' }}');
 
             });
             }, 3000);

@@ -170,6 +170,7 @@ deviceClient.on('connect', function () {
           targetDevice.peripheral.disconnect(function(error) {
             if(!error) {
               clearTimeout(targetDevice.rssi);
+              connectedDevices[payload.data.deviceId] = null;
               deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " disconnected successfully."}));
             }
             else {

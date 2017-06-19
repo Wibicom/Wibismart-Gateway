@@ -436,7 +436,7 @@ function connectToEnviro(peripheral) {
             thisPeripheral.rssi = setInterval(function() {
               peripheral.updateRssi(function(err, rssi) {
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
-              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"localName : ' + peripheral.localName + ', "d" : { "rssi" : ' + rssi + ' }}');
+              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"localName : ' + peripheral.advertisement.localName + ', "d" : { "rssi" : ' + rssi + ' }}');
 
             });
             }, 3000);

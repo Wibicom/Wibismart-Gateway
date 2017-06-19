@@ -7,6 +7,19 @@
 * Device ID : b0b448e49c80
 * Authentication Method : token
 * Authentication Token : u!lTBzeWYJ1Bd!fC)Q
+
+    "org" : "4rxa4d",
+    "id" : "506583dd5c62",
+    "domain": "internetofthings.ibmcloud.com",
+    "type" : "BeagleBone",
+    "auth-method" : "token",
+    "auth-token" : "rGpBk2iF?tMG*PSznn"
+
+* ID d'organisation 4rxa4d
+* Type de terminal BeagleBone
+* ID de terminal 506583dd346a
+* Méthode d'authentification token
+* Jeton d'authentification @M6ZAOvLtr_pQ_j@x-
 */
 
 
@@ -45,6 +58,8 @@ var batteryDataCharUuid = '2a19';
 //varibles used for commands
 var currentDiscoveredDevices = [];
 var connectedDevices = {};
+var manualDisconnection = {};
+var naturalDisconnection = {};
 
 
 
@@ -90,6 +105,7 @@ deviceClient.on('connect', function () {
 	console.log('[MQTT] Connected');
   deviceClient.subscribeToGatewayCommand("scan");
   deviceClient.subscribeToGatewayCommand("connectTo");
+  deviceClient.subscribeToGatewayCommand("disconnectTo")
   deviceClient.subscribeToGatewayCommand("sensorToggle");
   deviceClient.subscribeToGatewayCommand("sensorPeriod");
   deviceClient.subscribeToGatewayCommand("getter");
@@ -136,6 +152,32 @@ deviceClient.on('connect', function () {
         if (found == false) {
           console.log("Did not find " + payload.data.localName);
           deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is not found. Try scanning again..."}));
+        }
+        break;
+      case 'disconnectTo':
+        var connected = false;
+        for(i in connectedDevices) {
+          if (i == payload.data.deviceId) {
+            connected = true;
+          }
+        }
+        if (connected) {
+          targetDevice = connectedDevices[payload.data.deviceId];
+          manualDisconnection[payload.data.deviceId] = true;
+          setTimeout(function() {
+            manualDisconnection[payload.data.deviceId] = null;
+          }, 5000);
+          targetDevice.peripheral.disconnect(function(error) {
+            if(!error) {
+              deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " disconnected successfully."}));
+            }
+            else {
+              deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " failed to disconnect."}));
+            }
+          });
+        }
+        else {
+          deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is already disconnected"}));
         }
         break;
       case 'sensorToggle':
@@ -252,8 +294,11 @@ deviceClient.on('connect', function () {
 
 
 noble.on('discover', function(peripheral) {
+  if(naturalDisconnection[naturalDisconnection[peripheral.address.replace(/:/g, '')]]) {//if th device recently disconnected and is discovered, we reconnect to it
+    connectToEnviro(peripheral);
+  }
   // Check if peripheral contains 'Enviro' in its name
-  if(peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1) {
+  else if( peripheral.advertisement['localName'] != null && peripheral.advertisement['localName'].indexOf('Enviro') > -1) {
   	console.log('[BLE] Discovered Enviro ', peripheral.advertisement['localName'], " with address : ", peripheral.address, '.');
 
     
@@ -277,13 +322,20 @@ function connectToEnviro(peripheral) {
 
       peripheral.once('disconnect', function() {
         // handle the disconnection event of the peripheral
-        var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
-        clearTimeout(thisPeripheral.rssi);
-        connectedDevices[peripheral.address.replace(/:/g, '')] = null;
-        console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");
-        console.log('      Attempting to reconnect ...');
-        deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " disconnected, atempting to reconect."}));
-        connectToEnviro(peripheral);
+        if (!manualDisconnection[peripheral.address.replace(/:/g, '')]) {
+          var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+          clearTimeout(thisPeripheral.rssi);
+          connectedDevices[peripheral.address.replace(/:/g, '')] = null;
+          naturalDisconnection[peripheral.address.replace(/:/g, '')] = true;
+          setTimeout(function() {
+            naturalDisconnection[peripheral.address.replace(/:/g, '')] = null;
+          }, 12000);
+          console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");
+          console.log('      Attempting to reconnect ...');
+          deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " disconnected, atempting to reconect."}));
+          noble.startScanning();
+        }
+          
       });
       console.log("[BLE] Looking for characteristics ...");
       // Once the peripheral has been connected, then discover the

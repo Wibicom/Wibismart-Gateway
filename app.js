@@ -133,7 +133,7 @@ deviceClient.on('connect', function () {
         var found = false;
         var alreadyConnected = false;
         for(i in connectedDevices) {
-          if(i == payload.data.deviceId && connectedDevices[i].peripheral.advertisement.localName == payload.data.localName) {
+          if(connectedDevices[i] != null && i == payload.data.deviceId && connectedDevices[i].peripheral.advertisement.localName == payload.data.localName) {
             alreadyConnected = true;
           }
         }

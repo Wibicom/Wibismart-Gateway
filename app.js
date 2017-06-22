@@ -397,10 +397,11 @@ function connectToEnviro(peripheral) {
                 thisPeripheral.batteryDataChar = characteristic;
               }
             })
-     
+         for(i in thisPeripheral) {
+      if (thisPeripheral[i]) {console.log(thisPeripheral[i]);}
+    }
            // Connects to the characteristics it found
             if (thisPeripheral.weatherOnChar && thisPeripheral.weatherDataChar && thisPeripheral.weatherPeriodChar) {
-              console.log(thisPeripheral.weatherOnChar);
               turnWeatherSensorOn(peripheral, true);
               setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral, "weather");
             }
@@ -450,57 +451,64 @@ function connectToEnviro(peripheral) {
 function setPeriod(char, period, peripheral, charName){
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
-    char.write(periodBuf, false, function(err) {
-      if(err) {//I dont think these print because callback is printed but no messages.
-        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10 + " seconds."}));
-        throw err;
-      }
-      else {
-        var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
-        thisPeripheral[charName+"period"] = period/10;
-        deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " was successfully set to " + period/10 + " seconds."}));
-      }
-    });
+    if(!char) {
+      peripheral.disconnect();
+    }
+    else {
+      char.write(periodBuf, false, function(err) {
+        if(err) {//I dont think these print because callback is printed but no messages.
+          deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10 + " seconds."}));
+          throw err;
+        }
+        else {
+          var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+          thisPeripheral[charName+"period"] = period/10;
+          deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " was successfully set to " + period/10 + " seconds."}));
+        }
+      });
+    }
 }
 
 
 function turnWeatherSensorOn(peripheral, first){ // the first variable determined if it is the first time that this is called to prevent to have double data sent when the sensor is tured off then back on.
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
-    console.log(thisPeripheral.weatherOnChar);
     if(!thisPeripheral.weatherOnChar) {
       peripheral.disconnect();
     }
     else {
-    thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
-    	if (!err) {
-        thisPeripheral.weatherSensorOn = true;
-        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
-    		if(first) {
-          thisPeripheral.weatherDataChar.on('data', function(data, isNotification) {
-            	
-            var temperature = ((data.readUInt8(2) * 0x10000 + data.readUInt8(1) * 0x100 + data.readUInt8(0)) / 100.0).toFixed(1);
-        		var pressure = ((data.readUInt8(5) * 0x10000 + data.readUInt8(4) * 0x100 + data.readUInt8(3)) / 100.0).toFixed(1);
-        		var humidity = (((data.readUInt8(8) * 0x10000 + data.readUInt8(7) * 0x100 + data.readUInt8(6))) / Math.pow(2, 10) * 10.0).toFixed(1);
-            if (temperature != 0 || pressure != 0 || humidity != 0) {
-              console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Weather Data : { Temperature : ' + temperature + ' C, Pressure : ' + pressure + ' mbar, Humidity: ' + humidity + ' % }');
-              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"d" : { "temperature" : ' + temperature + ', "pressure" : ' + pressure + ', "humidity" : ' + humidity + ' }}');
-            }
-           });
-        }
+      thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
+        if (!err) {
+          thisPeripheral.weatherSensorOn = true;
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
+          if(first) {
+            thisPeripheral.weatherDataChar.on('data', function(data, isNotification) {
+                
+              var temperature = ((data.readUInt8(2) * 0x10000 + data.readUInt8(1) * 0x100 + data.readUInt8(0)) / 100.0).toFixed(1);
+              var pressure = ((data.readUInt8(5) * 0x10000 + data.readUInt8(4) * 0x100 + data.readUInt8(3)) / 100.0).toFixed(1);
+              var humidity = (((data.readUInt8(8) * 0x10000 + data.readUInt8(7) * 0x100 + data.readUInt8(6))) / Math.pow(2, 10) * 10.0).toFixed(1);
+              if (temperature != 0 || pressure != 0 || humidity != 0) {
+                console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Weather Data : { Temperature : ' + temperature + ' C, Pressure : ' + pressure + ' mbar, Humidity: ' + humidity + ' % }');
+                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"d" : { "temperature" : ' + temperature + ', "pressure" : ' + pressure + ', "humidity" : ' + humidity + ' }}');
+              }
+            });
+          }
 
-    		thisPeripheral.weatherDataChar.subscribe(function(err) {
-           		if(!err){
-           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to weather"); 
-           		}
-          	});
-    	}
-    })
+          thisPeripheral.weatherDataChar.subscribe(function(err) {
+                if(!err){
+                  console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to weather"); 
+                }
+              });
+        }
+      })
     }
 }
 
 function turnAccelSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+    for(i in thisPeripheral) {
+      if (thisPeripheral[i]) {console.log(thisPeripheral[i]);}
+    }
     // Turn on accelerometer sensor and subsribe to it
     thisPeripheral.accelOnChar.write(onValue, false, function(err) {
     	if (!err) {

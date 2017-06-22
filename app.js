@@ -298,7 +298,6 @@ deviceClient.on('connect', function () {
 
 
 noble.on('discover', function(peripheral) {
-  console.log(peripheral.state);
   if(naturalDisconnection[peripheral.address.replace(/:/g, '')]) {//if the device recently disconnected and is discovered, we reconnect to it
     connectToEnviro(peripheral);
   }
@@ -437,13 +436,15 @@ function connectToEnviro(peripheral) {
 
             //sending Rssi information periodically every 3 seconds;
             var rssiUpdates = setInterval(function() {
-              for(i in peripheral) {
-                console.log(i);
+              if (peripheral.state == "disconnected") {
+                clearTimeout(rssiUpdates);
               }
-              peripheral.updateRssi(function(err, rssi) {
-                console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
-                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"localName" : "' + peripheral.advertisement.localName + '", "d" : { "rssi" : ' + rssi + ' }}');
-              });
+              else {
+                peripheral.updateRssi(function(err, rssi) {
+                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"localName" : "' + peripheral.advertisement.localName + '", "d" : { "rssi" : ' + rssi + ' }}');
+                });
+              }
             }, 3000);
             thisPeripheral.rssi = rssiUpdates;
         });

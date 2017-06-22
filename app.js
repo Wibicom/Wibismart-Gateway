@@ -397,9 +397,7 @@ function connectToEnviro(peripheral) {
                 thisPeripheral.batteryDataChar = characteristic;
               }
             })
-         for(i in thisPeripheral) {
-      if (thisPeripheral[i]) {console.log(i);}
-    }
+     
            // Connects to the characteristics it found
             if (thisPeripheral.weatherOnChar && thisPeripheral.weatherDataChar && thisPeripheral.weatherPeriodChar) {
               turnWeatherSensorOn(peripheral, true);
@@ -451,10 +449,7 @@ function connectToEnviro(peripheral) {
 function setPeriod(char, period, peripheral, charName){
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
-    if(!char) {
-      peripheral.disconnect();
-    }
-    else {
+    if(char) {
       char.write(periodBuf, false, function(err) {
         if(err) {//I dont think these print because callback is printed but no messages.
           deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10 + " seconds."}));
@@ -473,10 +468,7 @@ function setPeriod(char, period, peripheral, charName){
 function turnWeatherSensorOn(peripheral, first){ // the first variable determined if it is the first time that this is called to prevent to have double data sent when the sensor is tured off then back on.
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
-    if(!thisPeripheral.weatherOnChar) {
-      peripheral.disconnect();
-    }
-    else {
+    if(thisPeripheral.weatherOnChar) {
       thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
         if (!err) {
           thisPeripheral.weatherSensorOn = true;
@@ -506,109 +498,117 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
 
 function turnAccelSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
-    for(i in thisPeripheral) {
-      if (thisPeripheral[i]) {console.log(i);}
-    }
     // Turn on accelerometer sensor and subsribe to it
-    thisPeripheral.accelOnChar.write(onValue, false, function(err) {
-    	if (!err) {
-        thisPeripheral.accelSensorOn = true;
-        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Accelerometer of " + peripheral.advertisement.localName + " has connected successfully!"}));
-    		if(first) {
-          thisPeripheral.accelDataChar.on('data', function(data, isNotification) {
+    if (thisPeripheral.accelOnChar) {
+      thisPeripheral.accelOnChar.write(onValue, false, function(err) {
+        if (!err) {
+          thisPeripheral.accelSensorOn = true;
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Accelerometer of " + peripheral.advertisement.localName + " has connected successfully!"}));
+          if(first) {
+            thisPeripheral.accelDataChar.on('data', function(data, isNotification) {
 
-            var accelX = ((data.readInt8(1) * 0x100 + data.readInt8(0)) * 0.488).toFixed(0);
-        		var accelY = ((data.readInt8(3) * 0x100 + data.readInt8(2)) * 0.488).toFixed(0);
-        		var accelZ = ((data.readInt8(5) * 0x100 + data.readInt8(4)) * 0.488).toFixed(0);
-            if (accelX != 0 || accelY != 0 || accelZ != 0) {
-            	console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { X : ' + accelX + ', Y : ' + accelY + ', Z : ' + accelZ + ' }');
-              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"d" : { "x" : ' + accelX + ', "y" : ' + accelY + ', "z" : ' + accelZ + ' }}');
-            }
-          });
+              var accelX = ((data.readInt8(1) * 0x100 + data.readInt8(0)) * 0.488).toFixed(0);
+              var accelY = ((data.readInt8(3) * 0x100 + data.readInt8(2)) * 0.488).toFixed(0);
+              var accelZ = ((data.readInt8(5) * 0x100 + data.readInt8(4)) * 0.488).toFixed(0);
+              if (accelX != 0 || accelY != 0 || accelZ != 0) {
+                console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { X : ' + accelX + ', Y : ' + accelY + ', Z : ' + accelZ + ' }');
+                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"d" : { "x" : ' + accelX + ', "y" : ' + accelY + ', "z" : ' + accelZ + ' }}');
+              }
+            });
+          }
+
+          thisPeripheral.accelDataChar.subscribe(function(err) {
+                if(!err){
+                  console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to accelerometer");
+                }
+              });
         }
-
-    		thisPeripheral.accelDataChar.subscribe(function(err) {
-           		if(!err){
-           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to accelerometer");
-           		}
-          	});
-    	}
-    })
+      })
+    }
 }
 
 function turnLightSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on light sensor and subsribe to it
-    thisPeripheral.lightOnChar.write(onValue, false, function(err) {
-    	if (!err) {
-        thisPeripheral.lightSensorOn = true;
-        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
-    		if(first) {
-          thisPeripheral.lightDataChar.on('data', function(data, isNotification) {
-            	var lightLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
-              if (lightLevel != 0) { //maybe need to take this if statement depending if it is possible to get 0 normally
-            	  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : ' + lightLevel + ' mV');
-            	  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + lightLevel + ' }}');
-              }
-          });
-        }
+    if (thisPeripheral.lightOnChar) {
+      thisPeripheral.lightOnChar.write(onValue, false, function(err) {
+        if (!err) {
+          thisPeripheral.lightSensorOn = true;
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
+          if(first) {
+            thisPeripheral.lightDataChar.on('data', function(data, isNotification) {
+                var lightLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
+                if (lightLevel != 0) { //maybe need to take this if statement depending if it is possible to get 0 normally
+                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : ' + lightLevel + ' mV');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + lightLevel + ' }}');
+                }
+            });
+          }
 
-    		thisPeripheral.lightDataChar.subscribe(function(err) {
-           		if(!err){
-           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to light");
-           		}
-          	});
-    	}
-    })
+          thisPeripheral.lightDataChar.subscribe(function(err) {
+                if(!err){
+                  console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to light");
+                }
+              });
+        }
+      })
+    }
 }
 
 function turnCO2SensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on CO2 sensor and subsribe to it
-    thisPeripheral.CO2OnChar.write(onValue, false, function(err) {
-    	if (!err) {
-        thisPeripheral.CO2SensorOn = true;
-        deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "CO2 sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
-    		if(first) {
-          thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {//4 0-4 1-2 3-msb x 256 3-lsb
-            	var CO2Level = data.readUInt8(2) * 0x100 + data.readUInt8(3);
-              if (data.readUInt8(0) == 4 && data.readUInt8(1) == 2) { // this check is to make sure that the value sent by the enviro is correct.
-                if (CO2Level != 0) {
-            	    console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
-            	    deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"d" : { "CO2" : ' + CO2Level + ' }}');
+    if (thisPeripheral.CO2OnChar) {
+      thisPeripheral.CO2OnChar.write(onValue, false, function(err) {
+        if (!err) {
+          thisPeripheral.CO2SensorOn = true;
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "CO2 sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
+          if(first) {
+            thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {//4 0-4 1-2 3-msb x 256 3-lsb
+                var CO2Level = data.readUInt8(2) * 0x100 + data.readUInt8(3);
+                if (data.readUInt8(0) == 4 && data.readUInt8(1) == 2) { // this check is to make sure that the value sent by the enviro is correct.
+                  if (CO2Level != 0) {
+                    console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
+                    deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"d" : { "CO2" : ' + CO2Level + ' }}');
+                  }
                 }
-              }
-              else {
-                console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : error');
-              }
-              
-          });
-        }
+                else {
+                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : error');
+                }
+                
+            });
+          }
 
-    		thisPeripheral.CO2DataChar.subscribe(function(err) {
-           		if(!err){
-           			console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to CO2");
-           		}
-          	});
-    	}
-    })
+          thisPeripheral.CO2DataChar.subscribe(function(err) {
+                if(!err){
+                  console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to CO2");
+                }
+              });
+        }
+      })
+    }
 }
 
 function turnBatteryReadOn(peripheral){
       var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
-      thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
-            var batteryLevel = data.readUInt8(0);
-            var batteryLife = calculateBatteryLife(batteryLevel, thisPeripheral);
-            batteryLife = Math.round(batteryLife * 100)/100; // rounds to two decimal places
-            console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
-            deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');
-        });
-
-      thisPeripheral.batteryDataChar.subscribe(function(err) {
-            if(!err){
-              console.log("[BLE] ", peripheral.advertisement.localName, " Battery level notification on");
-            }
+      if (!thisPeripheral.batteryDataChar) {
+        peripheral.disconnect();
+      }
+      else {
+        thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
+              var batteryLevel = data.readUInt8(0);
+              var batteryLife = calculateBatteryLife(batteryLevel, thisPeripheral);
+              batteryLife = Math.round(batteryLife * 100)/100; // rounds to two decimal places
+              console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
+              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');
           });
+
+        thisPeripheral.batteryDataChar.subscribe(function(err) {
+              if(!err){
+                console.log("[BLE] ", peripheral.advertisement.localName, " Battery level notification on");
+              }
+        });
+      }
 }
 
 function calculateBatteryLife(batt, thisPeripheral) {

@@ -298,6 +298,7 @@ deviceClient.on('connect', function () {
 
 
 noble.on('discover', function(peripheral) {
+  cpnsole.log(peripheral.state);
   if(naturalDisconnection[peripheral.address.replace(/:/g, '')]) {//if the device recently disconnected and is discovered, we reconnect to it
     connectToEnviro(peripheral);
   }

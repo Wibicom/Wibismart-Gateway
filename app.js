@@ -437,7 +437,7 @@ function connectToEnviro(peripheral) {
             //sending Rssi information periodically every 3 seconds;
             var rssiUpdates = setInterval(function() {
               if (peripheral.state == "disconnected") {
-                clearTimeout(rssiUpdates);
+                clearInterval(rssiUpdates);
               }
               else {
                 peripheral.updateRssi(function(err, rssi) {

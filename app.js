@@ -507,7 +507,7 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
 function turnAccelSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     for(i in thisPeripheral) {
-      if (thisPeripheral[i]) {console.log(thisPeripheral[i]);}
+      if (thisPeripheral[i]) {console.log(i);}
     }
     // Turn on accelerometer sensor and subsribe to it
     thisPeripheral.accelOnChar.write(onValue, false, function(err) {

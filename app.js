@@ -72,11 +72,11 @@ offValue.writeUInt8(0x00, 0);
 setTimeout(function() {
 var mqttConfig = {
     "org" : "4rxa4d",
-    "id" : "506583dd5c62",
+    "id" : "506583dd346a",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "rGpBk2iF?tMG*PSznn"
+    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
@@ -194,7 +194,7 @@ deviceClient.on('connect', function () {
         if(payload.data.value == "off") {
           switch(payload.data.sensor) {
             case 'weatherOnChar':
-              if (targetDevice.weatherDataChar && targetDevice.weatherChar) {
+              if (targetDevice.weatherDataChar && targetDevice.weatherOnChar) {
                   turnSensorOff(peripheral, payload.data.sensor);
               }
               else {
@@ -466,6 +466,10 @@ function setPeriod(char, period, peripheral, charName){
 function turnWeatherSensorOn(peripheral, first){ // the first variable determined if it is the first time that this is called to prevent to have double data sent when the sensor is tured off then back on.
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
+    if(!thisPeripheral.weatherOnChar) {
+      peripheral.disconnect();
+    }
+    else {
     thisPeripheral.weatherOnChar.write(onValue, false, function(err) {
     	if (!err) {
         thisPeripheral.weatherSensorOn = true;
@@ -490,6 +494,7 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
           	});
     	}
     })
+    }
 }
 
 function turnAccelSensorOn(peripheral, first){

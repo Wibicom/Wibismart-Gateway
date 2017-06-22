@@ -333,7 +333,9 @@ function connectToEnviro(peripheral) {
         // handle the disconnection event of the peripheral
         if (!manualDisconnection[peripheral.address.replace(/:/g, '')]) {
           var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
-          clearTimeout(thisPeripheral.rssi);
+          if(thisPeripheral) {
+            clearTimeout(thisPeripheral.rssi);
+          }
           connectedDevices[peripheral.address.replace(/:/g, '')] = null;
           naturalDisconnection[peripheral.address.replace(/:/g, '')] = true;
           setTimeout(function() {

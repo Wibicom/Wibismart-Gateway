@@ -406,7 +406,7 @@ function connectToEnviro(peripheral) {
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Weather service not found");
             }
-            if (thisPeripheral.accelOnChar && thisPeripheral.accelDataChar && thisPeripheral.accelPeriodChar) {
+            if (thisPeripheral.accelOnChar != undefined && thisPeripheral.accelDataChar != undefined && thisPeripheral.accelPeriodChar != undefined) {
               turnAccelSensorOn(peripheral, true);
               setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral, "accel");
             }

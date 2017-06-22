@@ -400,13 +400,14 @@ function connectToEnviro(peripheral) {
      
            // Connects to the characteristics it found
             if (thisPeripheral.weatherOnChar && thisPeripheral.weatherDataChar && thisPeripheral.weatherPeriodChar) {
+              console.log(thisPeripheral.weatherOnChar);
               turnWeatherSensorOn(peripheral, true);
               setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral, "weather");
             }
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Weather service not found");
             }
-            if (thisPeripheral.accelOnChar != undefined && thisPeripheral.accelDataChar != undefined && thisPeripheral.accelPeriodChar != undefined) {
+            if (thisPeripheral.accelOnChar && thisPeripheral.accelDataChar && thisPeripheral.accelPeriodChar) {
               turnAccelSensorOn(peripheral, true);
               setPeriod(thisPeripheral.accelPeriodChar, 30, peripheral, "accel");
             }
@@ -466,6 +467,7 @@ function setPeriod(char, period, peripheral, charName){
 function turnWeatherSensorOn(peripheral, first){ // the first variable determined if it is the first time that this is called to prevent to have double data sent when the sensor is tured off then back on.
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on weather sensor and subsribe to it
+    console.log(thisPeripheral.weatherOnChar);
     if(!thisPeripheral.weatherOnChar) {
       peripheral.disconnect();
     }

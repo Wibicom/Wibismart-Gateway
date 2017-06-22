@@ -435,10 +435,10 @@ function connectToEnviro(peripheral) {
             }
 
             //sending Rssi information periodically every 3 seconds;
-            thisPeripheral.rssi = setInterval(function() {
+            var rssiUpdates = setInterval(function() {
               peripheral.updateRssi(function(err, rssi) {
               if(!rssi) {
-                clearTimeout(thisPeripheral.rssi);
+                clearInterval(rssiUpdates);
               }
               else {
                 console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
@@ -446,6 +446,7 @@ function connectToEnviro(peripheral) {
               }
             });
             }, 3000);
+            thisPeripheral.rssi = rssiUpdates;
         });
     })
 }

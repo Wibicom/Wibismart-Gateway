@@ -398,7 +398,7 @@ function connectToEnviro(peripheral) {
               }
             })
          for(i in thisPeripheral) {
-      if (thisPeripheral[i]) {console.log(thisPeripheral[i]);}
+      if (thisPeripheral[i]) {console.log(i);}
     }
            // Connects to the characteristics it found
             if (thisPeripheral.weatherOnChar && thisPeripheral.weatherDataChar && thisPeripheral.weatherPeriodChar) {

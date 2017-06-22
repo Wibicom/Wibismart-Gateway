@@ -167,21 +167,26 @@ deviceClient.on('connect', function () {
           setTimeout(function() {
             manualDisconnection[payload.data.deviceId] = null;
           }, 5000);
-          targetDevice.peripheral.disconnect(function(error) {
-            if(!error) {
-              clearTimeout(targetDevice.rssi);
-              connectedDevices[payload.data.deviceId] = null;
-              deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " disconnected successfully."}));
-              console.log(payload.data.localName + "disconnected.");
-            }
-            else {
-              deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " failed to disconnect."}));
-              console.log(payload.data.localName + "failed to disconnect.")
-            }
-          });
+          if (targetDevice) {
+            targetDevice.peripheral.disconnect(function(error) {
+              if(!error) {
+                clearTimeout(targetDevice.rssi);
+                connectedDevices[payload.data.deviceId] = null;
+                deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " disconnected successfully."}));
+                console.log(payload.data.localName + "disconnected.");
+              }
+              else {
+                deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " failed to disconnect."}));
+                console.log(payload.data.localName + "failed to disconnect.")
+              }
+            });
+          }
+          else {
+            deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is already disconnected"}));
+          }
         }
         else {
-          deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is already disconnected"}));
+          deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "Something went wrong trying to disconnect the device " + payload.data.localName + ". Try again."}));
         }
         break;
       case 'sensorToggle':

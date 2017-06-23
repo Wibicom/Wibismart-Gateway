@@ -318,7 +318,6 @@ noble.on('discover', function(peripheral) {
 
 
 function connectToEnviro(peripheral) {
-  console.log(peripheral);
   peripheral.connect(function(err) {
       if(err) {
         deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Connection to device " + peripheral.advertisement.localName + " was attempted and failed..."}));
@@ -677,7 +676,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
 
 
   var batteryNominalCapacity = 11; //hardcoded
-  var supplyVoltage = 3 * batt / 100;
+  var supplyVoltage = 2 + batt / 100;
   var difference = 3 - supplyVoltage;
   var batterylevel = 1 + (supplyVoltage - 3);
   var batteryCapacity = batteryNominalCapacity * (1 - Math.pow(difference, 2*batterylevel));

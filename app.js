@@ -72,11 +72,11 @@ offValue.writeUInt8(0x00, 0);
 setTimeout(function() {
 var mqttConfig = {
     "org" : "4rxa4d",
-    "id" : "506583dd5c62",
+    "id" : "506583dd346a",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "rGpBk2iF?tMG*PSznn"
+    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
@@ -318,6 +318,7 @@ noble.on('discover', function(peripheral) {
 
 
 function connectToEnviro(peripheral) {
+  console.lo$(peripheral);
   peripheral.connect(function(err) {
       if(err) {
         deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Connection to device " + peripheral.advertisement.localName + " was attempted and failed..."}));
@@ -349,16 +350,6 @@ function connectToEnviro(peripheral) {
           
       });
       console.log("[BLE] Looking for characteristics ...");
-      // Once the peripheral has been connected, then discover the
-      // services and characteristics of interest.
-      // peripheral.discoverAllServicesAndCharacteristics(function(error, services, characteristics){
-      //   console.log("[BLE] Found some !");
-      //   services.forEach(function(service) {
-      //     service.forEach(function(characteristic) {
-      //       console.log("[BLE] Found ", characteristic.uuid )
-      //     });
-      //   });
-      // });
 
         peripheral.discoverSomeServicesAndCharacteristics(serviceUuids, [], function(error, services, characteristics){
 

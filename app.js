@@ -318,7 +318,7 @@ noble.on('discover', function(peripheral) {
 
 
 function connectToEnviro(peripheral) {
-  console.lo$(peripheral);
+  console.log(peripheral);
   peripheral.connect(function(err) {
       if(err) {
         deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Connection to device " + peripheral.advertisement.localName + " was attempted and failed..."}));

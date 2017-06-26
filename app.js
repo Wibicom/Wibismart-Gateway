@@ -450,7 +450,7 @@ function connectToEnviro(peripheral) {
 
 function setPeriod(char, period, peripheral, charName){
 	  var periodBuf = new Buffer(2);
-    periodBuf.writeUInt16(period, 0);
+    periodBuf.writeUInt16LE(period, 0);
     if(char) {
       char.write(periodBuf, false, function(err) {
         if(err) {

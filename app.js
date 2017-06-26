@@ -314,9 +314,21 @@ noble.on('discover', function(peripheral) {
   else if( peripheral.advertisement['localName'] != null && (peripheral.advertisement['localName'].indexOf('Enviro') > -1 || peripheral.advertisement['localName'].indexOf('ArtESun') > -1)) {
   	console.log('[BLE] Discovered Enviro ', peripheral.advertisement['localName'], " with address : ", peripheral.address, '.');
 
-    
-    currentDiscoveredDevices.push(peripheral);
-	  
+    var alreadyDiscovered = false;
+    for(i in currentDiscoveredDevices) {
+      if (currentDiscoveredDevices[i].advertisement.localName == peripheral.advertisement.localName) {
+        alreadyDiscovered = true;
+      }
+    }
+    if (!alreadyDiscovered) {
+      currentDiscoveredDevices.push(peripheral);
+      out = [];
+      set = {};
+      set.localName = peripheral.advertisement.localName;
+      set.deviceId = peripheral.address.replace(/:/g, '');
+      out.push(set);
+      deviceClient.publishGatewayEvent("scanResponse", 'json', JSON.stringify({d:out}));
+    }
   }
 })
 

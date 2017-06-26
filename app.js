@@ -450,11 +450,10 @@ function connectToEnviro(peripheral) {
 
 function setPeriod(char, period, peripheral, charName){
 	  var periodBuf = new Buffer(1);
-    period = period.toString(16);
     periodBuf.writeUInt8(period, 0);
     if(char) {
       char.write(periodBuf, false, function(err) {
-        if(err) {//I dont think these print because callback is printed but no messages.
+        if(err) {
           deviceClient.publishGatewayEvent("sensorPeriodResponse", 'json', JSON.stringify({message: "Period of " + charName + " sensor on " + peripheral.advertisement.localName + " failed to be set to " + period/10 + " seconds."}));
           throw err;
         }

@@ -72,11 +72,11 @@ offValue.writeUInt8(0x00, 0);
 setTimeout(function() {
 var mqttConfig = {
     "org" : "4rxa4d",
-    "id" : "506583dd5c62",
+    "id" : "506583dd346a",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "rGpBk2iF?tMG*PSznn"
+    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
@@ -535,6 +535,7 @@ function turnLightSensorOn(peripheral, first){
     if (thisPeripheral.lightOnChar) {
       thisPeripheral.lightOnChar.write(onValue, false, function(err) {
         if (!err) {
+          console.log("wait what.....")
           thisPeripheral.lightSensorOn = true;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
           if(first) {

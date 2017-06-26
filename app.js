@@ -620,7 +620,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
   var sleep = 1.8; // hardcoded
 
   var totalAverageCurrentConsumption = 0;
-  if(thisPeripheral.weatherSensorOn = true) {
+  if(thisPeripheral.weatherSensorOn == true) {
     var averageCurrentDraw = (3198 * 2.93 + sleep * (thisPeripheral.weatherperiod * 1000 - 2.93))/(thisPeripheral.weatherperiod * 1000 * 1000);
     /*if(connectionInterval < 1500) {
       averageCurrentDraw += (4299 * 2.9 + sleep * (connectionInterval - 2.9))/(connectionInterval * 1000);
@@ -632,7 +632,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
     totalAverageCurrentConsumption += weatherSensorAverageCurrent;
   }
 
-  if(thisPeripheral.lightSensorOn = true) {
+  if(thisPeripheral.lightSensorOn == true) {
     var averageCurrentDraw = (1624 * 6.81 + sleep * (thisPeripheral.lightperiod * 1000 - 6.81))/(thisPeripheral.lightperiod * 1000 * 1000);
     /*if(connectionInterval < 1500) {
       averageCurrentDraw += (3764 * 2.69 + sleep * (connectionInterval - 2.69))/(connectionInterval * 1000);
@@ -644,7 +644,7 @@ function calculateBatteryLife(batt, thisPeripheral) {
     totalAverageCurrentConsumption += lightSensorAverageCurrent;
   }
 
-  if(thisPeripheral.accelSensorOn = true) {
+  if(thisPeripheral.accelSensorOn == true) {
     if (thisPeripheral.accelperiod < 0.1) {
       var bmaPeriod = 50;
     }

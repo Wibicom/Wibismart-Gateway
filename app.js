@@ -450,6 +450,7 @@ function connectToEnviro(peripheral) {
 
 function setPeriod(char, period, peripheral, charName){
 	  var periodBuf = new Buffer(1);
+    periodBuf.allocUnsafe(1);
     periodBuf.writeUInt8(period, 0);
     if(char) {
       char.write(periodBuf, false, function(err) {
@@ -535,7 +536,6 @@ function turnLightSensorOn(peripheral, first){
     if (thisPeripheral.lightOnChar) {
       thisPeripheral.lightOnChar.write(onValue, false, function(err) {
         if (!err) {
-          console.log("wait what.....")
           thisPeripheral.lightSensorOn = true;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Light sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
           if(first) {

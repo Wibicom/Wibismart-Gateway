@@ -258,6 +258,10 @@ deviceClient.on('connect', function () {
            deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot change the period of its sensors."}));
            break;
         }
+        if(payload.data.value > 25.5) { //this is due to the fact that we can only write a number as big as 255 in a 8 bit unsigned integer
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The period of the device " + payload.data.localName + " was not changed. Input a period less than 25.5 seconds."}));
+          break;
+        }
         peripheral = targetDevice.peripheral;
         var period = payload.data.value;
         period = parseFloat(period)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
@@ -449,8 +453,8 @@ function connectToEnviro(peripheral) {
 }
 
 function setPeriod(char, period, peripheral, charName){
-	  var periodBuf = new Buffer(2);
-    periodBuf.writeUInt16BE(period, 0);
+	  var periodBuf = new Buffer(1);
+    periodBuf.writeUInt8(period, 0);
     if(char) {
       char.write(periodBuf, false, function(err) {
         if(err) {

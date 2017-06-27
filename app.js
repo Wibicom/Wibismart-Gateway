@@ -339,6 +339,14 @@ function connectToEnviro(peripheral) {
         deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Connection to device " + peripheral.advertisement.localName + " was attempted and failed..."}));
         throw err;
       }
+      if(currentDiscoveredDevices.length > 0) {
+        for(i in currentDiscoveredDevices) {
+          if(currentDiscoveredDevices[i] == peripheral) {
+            currentDiscoveredDevices.splice(i, 1);
+            break;
+          }
+        }
+      }
       connectedDevices[peripheral.address.replace(/:/g, '')] = {peripheral: peripheral};
       var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
 

@@ -72,11 +72,11 @@ offValue.writeUInt8(0x00, 0);
 setTimeout(function() {
 var mqttConfig = {
     "org" : "4rxa4d",
-    "id" : "506583dd346a",
+    "id" : "506583dd5c62",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
+    "auth-token" : "rGpBk2iF?tMG*PSznn"
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);

@@ -632,9 +632,9 @@ function turnBatteryReadOn(peripheral){
         thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
               var batteryLevel = data.readUInt8(0);
               var batteryLife = calculateBatteryLife(batteryLevel, thisPeripheral);
+              batteryLife = Math.round(batteryLife * 100)/100; // rounds to two decimal places
               thisPeripheral.lastBatteryData = batteryLevel;
               thisPeripheral.lastBatteryLifeData = batteryLife;
-              batteryLife = Math.round(batteryLife * 100)/100; // rounds to two decimal places
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');
           });
@@ -741,5 +741,11 @@ function turnSensorOff(peripheral, char) {
           	});
     }
 }
+
+setInterval(function() {
+  for(i in connectedDevices) {
+    console.log(i);
+  }
+}, 4000);
 
 }, 700);

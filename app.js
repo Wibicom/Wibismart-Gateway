@@ -744,7 +744,9 @@ function turnSensorOff(peripheral, char) {
 
 setInterval(function() {
   for(i in connectedDevices) {
-    console.log(i);
+    if (connectedDevices[i].peripheral && connectedDevices[i].peripheral.state == "disconnected") {
+      connectedDevices[i] = null;
+    }
   }
 }, 4000);
 

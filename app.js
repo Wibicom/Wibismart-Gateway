@@ -72,11 +72,11 @@ offValue.writeUInt8(0x00, 0);
 setTimeout(function() {
 var mqttConfig = {
     "org" : "4rxa4d",
-    "id" : "506583dd5c62",
+    "id" : "506583dd346a",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "rGpBk2iF?tMG*PSznn"
+    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
@@ -506,6 +506,9 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
               var pressure = ((data.readUInt8(5) * 0x10000 + data.readUInt8(4) * 0x100 + data.readUInt8(3)) / 100.0).toFixed(1);
               var humidity = (((data.readUInt8(8) * 0x10000 + data.readUInt8(7) * 0x100 + data.readUInt8(6))) / Math.pow(2, 10) * 10.0).toFixed(1);
               if (temperature != 0 || pressure != 0 || humidity != 0) {
+                thisPeripheral.lastTemperatureData = temperature;
+                thisPeripheral.lastPressureData = pressure;
+                thisPeripheral.lastHumidityData = humidity;
                 console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Weather Data : { Temperature : ' + temperature + ' C, Pressure : ' + pressure + ' mbar, Humidity: ' + humidity + ' % }');
                 deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"d" : { "temperature" : ' + temperature + ', "pressure" : ' + pressure + ', "humidity" : ' + humidity + ' }}');
               }
@@ -537,6 +540,9 @@ function turnAccelSensorOn(peripheral, first){
               var accelY = ((data.readInt8(3) * 0x100 + data.readInt8(2)) * 0.488).toFixed(0);
               var accelZ = ((data.readInt8(5) * 0x100 + data.readInt8(4)) * 0.488).toFixed(0);
               if (accelX != 0 || accelY != 0 || accelZ != 0) {
+                thisPeripheral.lastAccelXData = accelX;
+                thisPeripheral.lastAccelYData = accelY;
+                thisPeripheral.lastAccelZData = accelZ;
                 console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { X : ' + accelX + ', Y : ' + accelY + ', Z : ' + accelZ + ' }');
                 deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"d" : { "x" : ' + accelX + ', "y" : ' + accelY + ', "z" : ' + accelZ + ' }}');
               }
@@ -565,6 +571,7 @@ function turnLightSensorOn(peripheral, first){
             thisPeripheral.lightDataChar.on('data', function(data, isNotification) {
                 var lightLevel = data.readUInt8(1) * 0x100 + data.readUInt8(0);
                 if (lightLevel != 0) { //maybe need to take this if statement depending if it is possible to get 0 normally
+                  thisPeripheral.lastLightData = lightLevel;
                   console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : ' + lightLevel + ' mV');
                   deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + lightLevel + ' }}');
                 }
@@ -590,10 +597,11 @@ function turnCO2SensorOn(peripheral, first){
           thisPeripheral.CO2SensorOn = true;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "CO2 sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
           if(first) {
-            thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {//4 0-4 1-2 3-msb x 256 3-lsb
+            thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {
                 var CO2Level = data.readUInt8(2) * 0x100 + data.readUInt8(3);
                 if (data.readUInt8(0) == 4 && data.readUInt8(1) == 2) { // this check is to make sure that the value sent by the enviro is correct.
                   if (CO2Level != 0) {
+                    thisPeripheral.lastCO2Data = CO2Level;
                     console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
                     deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"d" : { "CO2" : ' + CO2Level + ' }}');
                   }
@@ -624,6 +632,8 @@ function turnBatteryReadOn(peripheral){
         thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
               var batteryLevel = data.readUInt8(0);
               var batteryLife = calculateBatteryLife(batteryLevel, thisPeripheral);
+              thisPeripheral.lastBatteryData = batteryLevel;
+              thisPeripheral.lastBatteryLifeData = batteryLife;
               batteryLife = Math.round(batteryLife * 100)/100; // rounds to two decimal places
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');

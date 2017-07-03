@@ -311,7 +311,7 @@ noble.on('discover', function(peripheral) {
     connectToEnviro(peripheral);
   }
   // Check if peripheral contains 'Enviro' in its name
-  else if( peripheral.advertisement['localName'] != null && (peripheral.advertisement['localName'].indexOf('Enviro') > -1 || peripheral.advertisement['localName'].indexOf('ArtESun') > -1)) {
+  else if( peripheral.advertisement['localName'] != null && (peripheral.advertisement['localName'].indexOf('Enviro') > -1 || peripheral.advertisement['localName'].indexOf('ArtESun') > -1 || peripheral.advertisement['localName'].indexOf('Move') > -1)) {
   	console.log('[BLE] Discovered Enviro ', peripheral.advertisement['localName'], " with address : ", peripheral.address, '.');
 
     var alreadyDiscovered = false;

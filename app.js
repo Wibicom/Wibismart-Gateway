@@ -256,6 +256,9 @@ deviceClient.on('connect', function () {
               break;
           }
         }
+        else if (payload.data.sensor == "gasesOnChar") {
+          turnGasesSensorOn(peripheral, payload.data.value, false);
+        }
         break;
       case 'sensorPeriod':
         var targetDevice = connectedDevices[payload.data.deviceId];
@@ -463,7 +466,7 @@ function connectToEnviro(peripheral) {
               console.log("[BLE] ", peripheral.advertisement.localName, " CO2 service not found");
             }
             if(thisPeripheral.gasesOnChar && thisPeripheral.gasesDataChar && thisPeripheral.gasesPeriodChar) {
-              turnGasesSensorOn(peripheral,[1, 1, 1, 1], true);
+              turnGasesSensorOn(peripheral,[true, true, true, true], true);
               setPeriod(thisPeripheral.gasesPeriodChar, 100, peripheral, "gases");
             }
             else {
@@ -645,14 +648,6 @@ function turnGasesSensorOn(peripheral, config, first){
     if (thisPeripheral.gasesOnChar) {
       thisPeripheral.gasesOnChar.write(valueToSend(config) , false, function(err) {
         if (!err) {
-          for (i in config) {
-            if(config[i] == true) {
-              config[i] = true;
-            }
-            else {
-              config[i] = false;
-            }
-          }
           thisPeripheral.SO2SensorOn = config[3];
           thisPeripheral.COSensorOn = config[2];
           thisPeripheral.O3SensorOn = config[1];
@@ -807,6 +802,14 @@ function turnSensorOff(peripheral, char) {
 
 
 function valueToSend(config) { // this functio is used to determine what to send to the gases sensor On/Off characteristic
+  for (i in config) {
+    if(config[i] == true) {
+      config[i] = 1;
+    }
+    else {
+      config[i] = 0;
+    }
+  }
   var value = config[0] + ( config[1] * 2 ) + ( config[2] * 4 ) + ( config[3] * 8 );
   value = '0x' + value.toString(16);
   var buf = new Buffer(1);

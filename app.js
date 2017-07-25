@@ -655,10 +655,10 @@ function turnGasesSensorOn(peripheral, config, first){
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Gases sensor of " + peripheral.advertisement.localName + " has changed configuration successfully!"}));
           if(first) {
             thisPeripheral.gasesDataChar.on('data', function(data, isNotification) {
-                var SO2Level = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16) * Math.pu
-                var COLevel = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16)
-                var O3Level = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16)
-                var NO2Level = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16)
+                var SO2Level = Math.round(((parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
+                var COLevel = Math.round(((parseInt(data.readUInt8(3) + "" + data.readUInt8(2) + "" + data.readUInt8(1) + "" + data.readUInt8(0), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
+                var O3Level = Math.round(((parseInt(data.readUInt8(11) + "" + data.readUInt8(10) + "" + data.readUInt8(9) + "" + data.readUInt8(8), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
+                var NO2Level = Math.round(((parseInt(data.readUInt8(15) + "" + data.readUInt8(14) + "" + data.readUInt8(13) + "" + data.readUInt8(12), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
                 if (SO2Level != 0 || COLevel != 0 || O3Level != 0 || NO2Level != 0) {
                   thisPeripheral.lastSO2Data = SO2Level;
                   thisPeripheral.lastCOData = COLevel;

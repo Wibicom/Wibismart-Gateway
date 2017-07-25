@@ -29,9 +29,10 @@ var Client = require('ibmiotf');
 var weatherServiceUuid = 'aa40';
 var accelServiceUuid = 'aa80';
 var lightServiceUuid = 'aa20';
-var CO2ServiceUuid = 'aa10';
+var CO2ServiceUuid = 'cc10';
+var gasesServiveUuid = 'bb10';
 var batteryServiceUuid = '180f';
-var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, CO2ServiceUuid ,batteryServiceUuid];
+var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, CO2ServiceUuid, gasesServiveUuid ,batteryServiceUuid];
 
 var weatherDataCharUuid = 'aa41';
 var weatherOnCharUuid = 'aa42';
@@ -47,9 +48,13 @@ var lightDataCharUuid = 'aa21';
 var lightOnCharUuid = 'aa22';
 var lightPeriodCharUuid = 'aa23';
 
-var CO2DataCharUuid = 'aa11';
-var CO2OnCharUuid = 'aa12'
-var CO2PeriodCharUuid = 'aa14';
+var CO2DataCharUuid = 'cc11';
+var CO2OnCharUuid = 'cc12'
+var CO2PeriodCharUuid = 'cc14';
+
+var gasesDataCharUuid = 'bb11'; //SpecSensor
+var gasesOnCharUuid = 'bb12';
+var gasesPeriodCharUuid = 'bb14';
 
 
 var batteryDataCharUuid = '2a19';
@@ -72,11 +77,11 @@ offValue.writeUInt8(0x00, 0);
 setTimeout(function() {
 var mqttConfig = {
     "org" : "4rxa4d",
-    "id" : "506583dd5c62",
+    "id" : "506583dd346a",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "rGpBk2iF?tMG*PSznn"
+    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
 };
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
@@ -367,7 +372,7 @@ function connectToEnviro(peripheral) {
           }, 12000);
           console.log('[BLE] Peripheral:', peripheral.advertisement['localName'], " disconnected");
           console.log('      Attempting to reconnect ...');
-          deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " disconnected, atempting to reconect."}));
+          deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Device " + peripheral.advertisement.localName + " disconnected, atempting to reconnect."}));
           noble.startScanning();
         }
           
@@ -390,6 +395,9 @@ function connectToEnviro(peripheral) {
               else if (CO2OnCharUuid == characteristic.uuid) {
                 thisPeripheral.CO2OnChar = characteristic;
               }
+              else if (gasesOnCharUuid == characteristic.uuid) {
+                thisPeripheral.gasesOnChar = characteristic;
+              }
               else if (weatherDataCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherDataChar = characteristic;
               }
@@ -402,6 +410,9 @@ function connectToEnviro(peripheral) {
               else if (CO2DataCharUuid == characteristic.uuid) {
                 thisPeripheral.CO2DataChar = characteristic;
               }
+              else if (gasesDataCharUuid == characteristic.uuid) {
+                thisPeripheral.gasesDataChar == characteristic;
+              }
               else if (weatherPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherPeriodChar = characteristic;
               }
@@ -413,6 +424,9 @@ function connectToEnviro(peripheral) {
               }
               else if (CO2PeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.CO2PeriodChar = characteristic;
+              }
+              else if (gasesPeriodCharUuid == characteristic.uuid) {
+                thisPeripheral.gasesPeriodChar = characteristic;
               }
               else if (batteryDataCharUuid == characteristic.uuid) {
                 thisPeripheral.batteryDataChar = characteristic;
@@ -448,6 +462,13 @@ function connectToEnviro(peripheral) {
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " CO2 service not found");
             }
+            if(thisPeripheral.gasesOnChar && thisPeripheral.gasesDataChar && thisPeripheral.gasesPeriodChar) {
+              turnGasesSensorOn(peripheral,[1, 1, 1, 1], true);
+              setPeriod(thisPeripheral.gasesPeriodChar, 100, peripheral, "gases");
+            }
+            else {
+              console.log("[BLE] ", peripheral.advertisement.localName, " Gases service not found");
+            }
             if (thisPeripheral.batteryDataChar) {
               turnBatteryReadOn(peripheral, true);
             }
@@ -463,7 +484,7 @@ function connectToEnviro(peripheral) {
               else {
                 peripheral.updateRssi(function(err, rssi) {
                   console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
-                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"localName" : "' + peripheral.advertisement.localName + '", "d" : { "rssi" : ' + rssi + ' }}');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "localName" : "' + peripheral.advertisement.localName + '", "d" : { "rssi" : ' + rssi + ' }}');
                 });
               }
             }, 3000);
@@ -510,7 +531,7 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
                 thisPeripheral.lastPressureData = pressure;
                 thisPeripheral.lastHumidityData = humidity;
                 console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Weather Data : { Temperature : ' + temperature + ' C, Pressure : ' + pressure + ' mbar, Humidity: ' + humidity + ' % }');
-                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"d" : { "temperature" : ' + temperature + ', "pressure" : ' + pressure + ', "humidity" : ' + humidity + ' }}');
+                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "temperature" : ' + temperature + ', "pressure" : ' + pressure + ', "humidity" : ' + humidity + ' }}');
               }
             });
           }
@@ -544,7 +565,7 @@ function turnAccelSensorOn(peripheral, first){
                 thisPeripheral.lastAccelYData = accelY;
                 thisPeripheral.lastAccelZData = accelZ;
                 console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { X : ' + accelX + ', Y : ' + accelY + ', Z : ' + accelZ + ' }');
-                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"d" : { "x" : ' + accelX + ', "y" : ' + accelY + ', "z" : ' + accelZ + ' }}');
+                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "x" : ' + accelX + ', "y" : ' + accelY + ', "z" : ' + accelZ + ' }}');
               }
             });
           }
@@ -573,7 +594,7 @@ function turnLightSensorOn(peripheral, first){
                 if (lightLevel != 0) { //maybe need to take this if statement depending if it is possible to get 0 normally
                   thisPeripheral.lastLightData = lightLevel;
                   console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : ' + lightLevel + ' mV');
-                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"d" : { "light" : ' + lightLevel + ' }}');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "light" : ' + lightLevel + ' }}');
                 }
             });
           }
@@ -598,16 +619,58 @@ function turnCO2SensorOn(peripheral, first){
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "CO2 sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
           if(first) {
             thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {
-                var CO2Level = data.readUInt8(2) * 0x100 + data.readUInt8(3);
-                if (data.readUInt8(0) == 4 && data.readUInt8(1) == 2) { // this check is to make sure that the value sent by the enviro is correct.
-                  if (CO2Level != 0) {
-                    thisPeripheral.lastCO2Data = CO2Level;
-                    console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
-                    deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"d" : { "CO2" : ' + CO2Level + ' }}');
-                  }
+                var CO2Level = ((data[3]-48) * 10000 + (data[4]-48)*1000 + (data[5]-48)*100 + (data[6]-48)*10 + (data[7]-48));
+                
+                if (CO2Level != 0) {
+                  thisPeripheral.lastCO2Data = CO2Level;
+                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "CO2" : ' + CO2Level + ' }}');
                 }
-                else {
-                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : error');
+            });
+          }
+
+          thisPeripheral.CO2DataChar.subscribe(function(err) {
+                if(!err){
+                  console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to CO2");
+                }
+              });
+        }
+      })
+    }
+}
+
+function turnGasesSensorOn(peripheral, config, first){
+    var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+    // Turn on Gases sensor and subsribe to it
+    if (thisPeripheral.gasesOnChar) {
+      thisPeripheral.gasesOnChar.write(valueToSend(config) , false, function(err) {
+        if (!err) {
+          for (i in config) {
+            if(config[i] == true) {
+              config[i] = true;
+            }
+            else {
+              config[i] = false;
+            }
+          }
+          thisPeripheral.SO2SensorOn = config[3];
+          thisPeripheral.COSensorOn = config[2];
+          thisPeripheral.O3SensorOn = config[1];
+          thisPeripheral.NO2SensorOn = config[0];
+          deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Gases sensor of " + peripheral.advertisement.localName + " has changed configuration successfully!"}));
+          if(first) {
+            thisPeripheral.gasesDataChar.on('data', function(data, isNotification) {
+                var SO2Level = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16) * Math.pu
+                var COLevel = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16)
+                var O3Level = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16)
+                var NO2Level = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16)
+                if (SO2Level != 0 || COLevel != 0 || O3Level != 0 || NO2Level != 0) {
+                  thisPeripheral.lastSO2Data = SO2Level;
+                  thisPeripheral.lastCOData = COLevel;
+                  thisPeripheral.lastO3Data = O3Level;
+                  thisPeripheral.lastNO2Data = NO2Level
+                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { SO2 : ' + SO2Level + ', CO : ' + COLevel + ', O3 : ' + O3Level + ', NO2 : ' + NO2Level + ' }');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"gases","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { SO2 : ' + SO2Level + ', CO : ' + COLevel + ', O3 : ' + O3Level + ', NO2 : ' + NO2Level + ' }}');
                 }
                 
             });
@@ -636,7 +699,7 @@ function turnBatteryReadOn(peripheral){
               thisPeripheral.lastBatteryData = batteryLevel;
               thisPeripheral.lastBatteryLifeData = batteryLife;
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
-              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');
+              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "batteryLevel" : ' + batteryLevel + ', "batteryLife" : ' + batteryLife + ' }}');
           });
 
         thisPeripheral.batteryDataChar.subscribe(function(err) {
@@ -742,6 +805,17 @@ function turnSensorOff(peripheral, char) {
     }
 }
 
+
+function valueToSend(config) { // this functio is used to determine what to send to the gases sensor On/Off characteristic
+  var value = config[0] + ( config[1] * 2 ) + ( config[2] * 4 ) + ( config[3] * 8 );
+  value = '0x' + value.toString(16);
+  var buf = new Buffer(1);
+  buf.writeUInt8(value, 0);
+  return buf
+}
+
+
+
 setInterval(function() {
   for(i in connectedDevices) {
     if (connectedDevices[i] && connectedDevices[i].peripheral && connectedDevices[i].peripheral.state == "disconnected") {
@@ -749,5 +823,7 @@ setInterval(function() {
     }
   }
 }, 4000);
+
+
 
 }, 700);

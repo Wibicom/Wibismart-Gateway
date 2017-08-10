@@ -205,7 +205,7 @@ deviceClient.on('connect', function () {
         var peripheral = targetDevice.peripheral;
         if(payload.data.value == "CO2Calib") {
            console.log("CO2 calibration command for " + payload.data.localName);
-           if(targetDevice.CO2SensorOn && targetDevice.CO2OnChar) {
+           if(targetDevice.CO2SensorOn != null && targetDevice.CO2SensorOn == true && targetDevice.CO2OnChar) {
              console.log("CalibrationCO2 for " + payload.data.localName + " started...");
               deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " Started its CO2 calibration..."}));
               targetDevice.CO2Calib = true;
@@ -214,6 +214,9 @@ deviceClient.on('connect', function () {
                   console.log("CO2 calibration write successful!");
                 }
               });
+           }
+           else {
+             deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " mush turn on its CO2 senors beofre calibrating it."}));
            }
         }
         else if(payload.data.value == "off") {
@@ -646,13 +649,6 @@ function turnCO2SensorOn(peripheral, first){
                   console.log("CO2 calibration for " + peripheral.advertisement.localName + " done.");
                   thisPeripheral.CO2Calib = false;
                   deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + peripheral.advertisement.localName.localName + " finished its CO2 calibration..."}));
-                    var out = {localName: peripheral.advertisement.localName.localName, deviceId: peripheral.address.replace(/:/g, ''), status: "connected", };
-                    for(i in thisPeripheral) {
-                      if(i != "peripheral" && i != "rssi" && i.indexOf("DataChar") < 0 && i.indexOf("OnChar") < 0 && i.indexOf("PeriodChar") < 0) {
-                        out[i] = thisPeripheral[i];
-                      }
-                    }
-                    deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'deviceInfo', d: out}));
                 }
                 else {
                   if(data[0]==32 && data[1] == 90) {

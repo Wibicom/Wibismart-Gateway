@@ -29,8 +29,8 @@ var Client = require('ibmiotf');
 var weatherServiceUuid = 'aa40';
 var accelServiceUuid = 'aa80';
 var lightServiceUuid = 'aa20';
-var CO2ServiceUuid = 'cc10';
-var gasesServiveUuid = 'bb10';
+var CO2ServiceUuid = 'cc30';
+var gasesServiveUuid = 'bb40';
 var batteryServiceUuid = '180f';
 var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, CO2ServiceUuid, gasesServiveUuid ,batteryServiceUuid];
 
@@ -48,13 +48,13 @@ var lightDataCharUuid = 'aa21';
 var lightOnCharUuid = 'aa22';
 var lightPeriodCharUuid = 'aa23';
 
-var CO2DataCharUuid = 'cc11';
-var CO2OnCharUuid = 'cc12'
-var CO2PeriodCharUuid = 'cc14';
+var CO2DataCharUuid = 'cc31';
+var CO2OnCharUuid = 'cc32'
+var CO2PeriodCharUuid = 'cc34';
 
-var gasesDataCharUuid = 'bb11'; //SpecSensor
-var gasesOnCharUuid = 'bb12';
-var gasesPeriodCharUuid = 'bb14';
+var gasesDataCharUuid = 'bb41'; //SpecSensor
+var gasesOnCharUuid = 'bb42';
+var gasesPeriodCharUuid = 'bb44';
 
 
 var batteryDataCharUuid = '2a19';
@@ -228,7 +228,8 @@ deviceClient.on('connect', function () {
               }
               break;
             case 'CO2OnChar':
-              if (targetDevice.CO2DataChar && targetDevice.CO2OnChar) {
+              targetDevice.altitude = payload.data.altitude;
+              if (targetDevice.CO2DataChar && targetDevice.CO2OnChar && targetDevice.CO2SensorOn) {
                 turnSensorOff(peripheral, payload.data.sensor);
               }
               else {
@@ -251,7 +252,10 @@ deviceClient.on('connect', function () {
               turnLightSensorOn(peripheral, false);
               break;
             case 'CO2OnChar':
-              turnCO2SensorOn(peripheral, false);
+              targetDevice.altitude = payload.data.altitude;
+              if(targetDevice.CO2SensorOn == false) {
+                turnCO2SensorOn(peripheral, false);
+              }
             default:
               break;
           }
@@ -622,9 +626,14 @@ function turnCO2SensorOn(peripheral, first){
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "CO2 sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
           if(first) {
             thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {
-                var CO2Level = ((data[3]-48) * 10000 + (data[4]-48)*1000 + (data[5]-48)*100 + (data[6]-48)*10 + (data[7]-48));
-                
-                if (CO2Level != 0) {
+                var CO2Level = 0;
+                if(data[0]==32 && data[1] == 90) {
+                  CO2Level = ((data[3]-48) * 10000 + (data[4]-48)*1000 + (data[5]-48)*100 + (data[6]-48)*10 + (data[7]-48));
+                }
+                if(thisPeripheral.altitude) {
+                  CO2Level = Math.round( CO2Level * (1 + 0.001 * ( 1013 - ( 1013 * Math.pow( 1 - 2.25577 * thisPeripheral.altitude * Math.pow(10,-5) , 5.25588)))));
+                }
+                if (CO2Level > 0) {
                   thisPeripheral.lastCO2Data = CO2Level;
                   console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
                   deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "CO2" : ' + CO2Level + ' }}');

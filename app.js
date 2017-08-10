@@ -73,6 +73,8 @@ var onValue = new Buffer(1);
 onValue.writeUInt8(0x01, 0);
 var offValue = new Buffer(1);
 offValue.writeUInt8(0x00, 0);
+var calibValue = new Buffer(1);
+calibValue.writeUInt8(0xee);
 
 setTimeout(function() {
 var mqttConfig = {
@@ -201,7 +203,20 @@ deviceClient.on('connect', function () {
            break;
         }
         var peripheral = targetDevice.peripheral;
-        if(payload.data.value == "off") {
+        if(payload.data.value == "CO2Calib") {
+           console.log("CO2 calibration command for " + targetDevice.localName);
+           if(targetDevice.CO2SensorOn && targetDevice.CO2OnChar) {
+             console.log("CalibrationCO2 for " + targetDevice.localName + " started...");
+              deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " Started its CO2 calibration..."}));
+              targetDevice.CO2Calib = true;
+              targetDevice.CO2OnChar.write(calibValue, false, function(err) {
+                if(!err) {
+                  console.log("CO2 calibration write successful!");
+                }
+              });
+           }
+        }
+        else if(payload.data.value == "off") {
           switch(payload.data.sensor) {
             case 'weatherOnChar':
               if (targetDevice.weatherDataChar && targetDevice.weatherOnChar) {
@@ -627,16 +642,28 @@ function turnCO2SensorOn(peripheral, first){
           if(first) {
             thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {
                 var CO2Level = 0;
-                if(data[0]==32 && data[1] == 90) {
-                  CO2Level = ((data[3]-48) * 10000 + (data[4]-48)*1000 + (data[5]-48)*100 + (data[6]-48)*10 + (data[7]-48));
+                if(data[0] == 0xaa && data[1] == 0xaa) {
+                  deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + thisPeripheral.localName + " finished its CO2 calibration..."}));
+                    var out = {localName: thisPeripheral.localName, deviceId: thisPeripheral.deviceId, status: "connected", };
+                    for(i in thisPeripheral) {
+                      if(i != "peripheral" && i != "rssi" && i.indexOf("DataChar") < 0 && i.indexOf("OnChar") < 0 && i.indexOf("PeriodChar") < 0) {
+                        out[i] = thisPeripheral[i];
+                      }
+                    }
+                    deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'deviceInfo', d: out}));
                 }
-                if(thisPeripheral.altitude) {
-                  CO2Level = Math.round( CO2Level * (1 + 0.001 * ( 1013 - ( 1013 * Math.pow( 1 - 2.25577 * thisPeripheral.altitude * Math.pow(10,-5) , 5.25588)))));
-                }
-                if (CO2Level > 0) {
-                  thisPeripheral.lastCO2Data = CO2Level;
-                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
-                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "CO2" : ' + CO2Level + ' }}');
+                else {
+                  if(data[0]==32 && data[1] == 90) {
+                    CO2Level = ((data[3]-48) * 10000 + (data[4]-48)*1000 + (data[5]-48)*100 + (data[6]-48)*10 + (data[7]-48));
+                  }
+                  if(thisPeripheral.altitude) {
+                    CO2Level = Math.round( CO2Level * (1 + 0.001 * ( 1013 - ( 1013 * Math.pow( 1 - 2.25577 * thisPeripheral.altitude * Math.pow(10,-5) , 5.25588)))));
+                  }
+                  if (CO2Level > 0) {
+                    thisPeripheral.lastCO2Data = CO2Level;
+                    console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
+                    deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "CO2" : ' + CO2Level + ' }}');
+                  }
                 }
             });
           }

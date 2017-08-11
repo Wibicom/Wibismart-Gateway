@@ -509,7 +509,7 @@ function connectToEnviro(peripheral) {
               else {
                 peripheral.updateRssi(function(err, rssi) {
                   console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Location Data : ' + rssi + ' dbm');
-                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "localName" : "' + peripheral.advertisement.localName + '", "d" : { "rssi" : ' + rssi + ' }}');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"location","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "localName" : "' + peripheral.advertisement.localName + '", "d" : { "rssi" : ' + rssi + ' }}');
                 });
               }
             }, 3000);
@@ -561,7 +561,7 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
                 thisPeripheral.lastHumidityData = humidity;
                 thisPeripheral.lastUVData = UV;
                 console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Weather Data : { Temperature : ' + temperature + ' C, Pressure : ' + pressure + ' mbar, Humidity: ' + humidity + ' %, UV: ' + UV + ' }');
-                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "temperature" : "' + temperature + '", "pressure" : "' + pressure + '", "humidity" : "' + humidity + '", "UV" : "' + UV + '" }}');
+                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"air","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "temperature" : "' + temperature + '", "pressure" : "' + pressure + '", "humidity" : "' + humidity + '", "UV" : "' + UV + '" }}');
               }
             });
           }
@@ -595,7 +595,7 @@ function turnAccelSensorOn(peripheral, first){
                 thisPeripheral.lastAccelYData = accelY;
                 thisPeripheral.lastAccelZData = accelZ;
                 console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { X : ' + accelX + ', Y : ' + accelY + ', Z : ' + accelZ + ' }');
-                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "x" : "' + accelX + '", "y" : "' + accelY + '", "z" : "' + accelZ + '" }}');
+                deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"accel","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "x" : "' + accelX + '", "y" : "' + accelY + '", "z" : "' + accelZ + '" }}');
               }
             });
           }
@@ -624,7 +624,7 @@ function turnLightSensorOn(peripheral, first){
                 if (lightLevel != 0) { //maybe need to take this if statement depending if it is possible to get 0 normally
                   thisPeripheral.lastLightData = lightLevel;
                   console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Light Data : ' + lightLevel + ' mV');
-                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "light" : "' + lightLevel + '" }}');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"health","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "light" : "' + lightLevel + '" }}');
                 }
             });
           }
@@ -665,7 +665,7 @@ function turnCO2SensorOn(peripheral, first){
                   if (CO2Level > 0) {
                     thisPeripheral.lastCO2Data = CO2Level;
                     console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> CO2 Data : ' + CO2Level + ' ppm');
-                    deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "CO2" : "' + CO2Level + '" }}');
+                    deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"CO2","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "CO2" : "' + CO2Level + '" }}');
                   }
                 }
             });
@@ -704,7 +704,7 @@ function turnGasesSensorOn(peripheral, config, first){
                   thisPeripheral.lastO3Data = O3Level;
                   thisPeripheral.lastNO2Data = NO2Level
                   console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { SO2 : ' + SO2Level + ', CO : ' + COLevel + ', O3 : ' + O3Level + ', NO2 : ' + NO2Level + ' }');
-                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"gases","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "SO2" : "' + SO2Level + '", "CO" : "' + COLevel + '", "O3" : "' + O3Level + '", "NO2" : "' + NO2Level + '" }}');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"gases","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "SO2" : "' + SO2Level + '", "CO" : "' + COLevel + '", "O3" : "' + O3Level + '", "NO2" : "' + NO2Level + '" }}');
                 }
                 
             });
@@ -733,7 +733,7 @@ function turnBatteryReadOn(peripheral){
               thisPeripheral.lastBatteryData = batteryLevel;
               thisPeripheral.lastBatteryLifeData = batteryLife;
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Battery Data : { Battery level : ' + batteryLevel + ' % , battery life : ' + batteryLife + 'h }');
-              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"deviceId" : ' + peripheral.address.replace(/:/g, '') + ', "d" : { "batteryLevel" : "' + batteryLevel + '", "batteryLife" : "' + batteryLife + '" }}');
+              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"battery","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "batteryLevel" : "' + batteryLevel + '", "batteryLife" : "' + batteryLife + '" }}');
           });
 
         thisPeripheral.batteryDataChar.subscribe(function(err) {

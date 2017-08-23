@@ -565,8 +565,30 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
               var pressure = ((data.readUInt8(5) * 0x10000 + data.readUInt8(4) * 0x100 + data.readUInt8(3)) / 100.0).toFixed(1);
               var humidity = (((data.readUInt8(8) * 0x10000 + data.readUInt8(7) * 0x100 + data.readUInt8(6))) / Math.pow(2, 10) * 10.0).toFixed(1);
               var UV = 0;
-              if (data.length > 9) {
-                UV = data.readInt8(9);
+              if(data.length > 16) {
+                  var a = 1.761679358;
+                  var b = 0.750257081;
+                  var c = 2.730808808;
+                  var d = 0.825260014;
+                  var UVAresp = 0.011;
+                  var UVBresp = 0.012;
+
+                  var UVA = data.readUInt8(10) * 0x100 + data.readUInt8(9);
+                  var UVB = data.readUInt8(12) * 0x100 + data.readUInt8(11);
+                  var UVAcomp = data.readUInt8(14) * 0x100 + data.readUInt8(13);
+                  var UVBcomp = data.readUInt8(16) * 0x100 + data.readUInt8(15);
+
+                  var UVIA = (UVA - a * UVAcomp - b * UVBcomp) * UVAresp;
+                  var UVIB = (UVB - c * UVAcomp - d * UVBcomp) * UVBresp;
+
+                  var UV = (UVIA + UVIB) / 2;
+
+                  if(UV < 0) {
+                      UV = 0;
+                  }
+                  else {
+                      UV = Math.round(UVI);
+                  }
               }
               if (temperature != 0 || pressure != 0 || humidity != 0 || UV != 0) {
                 thisPeripheral.lastTemperatureData = temperature;

@@ -32,7 +32,8 @@ var lightServiceUuid = 'aa20';
 var CO2ServiceUuid = 'cc30';
 var gasesServiveUuid = 'bb40';
 var batteryServiceUuid = '180f';
-var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, CO2ServiceUuid, gasesServiveUuid ,batteryServiceUuid];
+var micServiceUuid = 'fff0';
+var serviceUuids = [weatherServiceUuid, accelServiceUuid, lightServiceUuid, CO2ServiceUuid, gasesServiveUuid , micServiceUuid, batteryServiceUuid];
 
 var weatherDataCharUuid = 'aa41';
 var weatherOnCharUuid = 'aa42';
@@ -58,6 +59,8 @@ var gasesPeriodCharUuid = 'bb44';
 
 
 var batteryDataCharUuid = '2a19';
+
+var micDataCharUuid = 'fff4';
 
 
 //varibles used for commands
@@ -453,6 +456,9 @@ function connectToEnviro(peripheral) {
               else if (gasesPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.gasesPeriodChar = characteristic;
               }
+              else if (micDataCharUuid == characteristic.uuid) {
+                thisPeripheral.micDataChar = characteristic;
+              }
               else if (batteryDataCharUuid == characteristic.uuid) {
                 thisPeripheral.batteryDataChar = characteristic;
               }
@@ -493,6 +499,13 @@ function connectToEnviro(peripheral) {
             }
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Gases service not found");
+            }
+            if (thisPeripheral.micDataChar) {
+              turnMicReadOn(peripheral, true);
+              
+            }
+            else {
+              console.log("[BLE] ", peripheral.advertisement.localName, " Mic service not found");
             }
             if (thisPeripheral.batteryDataChar) {
               turnBatteryReadOn(peripheral, true);
@@ -660,7 +673,7 @@ function turnCO2SensorOn(peripheral, first){
                     CO2Level = ((data[3]-48) * 10000 + (data[4]-48)*1000 + (data[5]-48)*100 + (data[6]-48)*10 + (data[7]-48));
                   }
                   if(thisPeripheral.altitude) {
-                    CO2Level = Math.round( CO2Level * (1 + 0.001 * ( 1013 - ( 1013 * Math.pow( 1 - 2.25577 * thisPeripheral.altitude * Math.pow(10,-5) , 5.25588)))));
+                    CO2Level = Math.round( CO2Level * (1 + 0.001 * ( 1013 + ( 1013 * Math.pow( 1 - 2.25577 * thisPeripheral.altitude * Math.pow(10,-5) , 5.25588)))));
                   }
                   if (CO2Level > 0) {
                     thisPeripheral.lastCO2Data = CO2Level;
@@ -718,6 +731,28 @@ function turnGasesSensorOn(peripheral, config, first){
         }
       })
     }
+}
+
+
+function turnMicReadOn(peripheral){
+      var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
+      if (!thisPeripheral.micDataChar) {
+        peripheral.disconnect();
+      }
+      else {
+        thisPeripheral.micDataChar.on('data', function(data, isNotification) {
+              var soundLevel = data.readUInt8(0);
+              thisPeripheral.lastSoundData = soundLevel;
+              console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Micriphone Data : { Sound level : ' + soundLevel + ' dB }');
+              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"sound","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "soundLevel" : "' + batteryLevel + '" }}');
+          });
+
+        thisPeripheral.soundDataChar.subscribe(function(err) {
+              if(!err){
+                console.log("[BLE] ", peripheral.advertisement.localName, " Sound level notification on");
+              }
+        });
+      }
 }
 
 function turnBatteryReadOn(peripheral){

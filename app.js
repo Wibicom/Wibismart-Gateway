@@ -502,7 +502,7 @@ function connectToEnviro(peripheral) {
             }
             if (thisPeripheral.micDataChar) {
               turnMicReadOn(peripheral, true);
-              
+
             }
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Mic service not found");
@@ -747,7 +747,7 @@ function turnMicReadOn(peripheral){
               deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"sound","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "soundLevel" : "' + batteryLevel + '" }}');
           });
 
-        thisPeripheral.soundDataChar.subscribe(function(err) {
+        thisPeripheral.micDataChar.subscribe(function(err) {
               if(!err){
                 console.log("[BLE] ", peripheral.advertisement.localName, " Sound level notification on");
               }

@@ -741,7 +741,7 @@ function turnMicReadOn(peripheral){
       }
       else {
         thisPeripheral.micDataChar.on('data', function(data, isNotification) {
-              var voltage = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16) * Math.pow(10, -3);
+              var voltage = parseInt(data.readUInt8(3) + "" + data.readUInt8(2) + "" + data.readUInt8(1) + "" + data.readUInt8(0), 16) * Math.pow(10, -3);
               var soundLevel;
               if(voltage > 99 && voltage < 300) {
                   soundLevel = 80;

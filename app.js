@@ -587,7 +587,7 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
                       UV = 0;
                   }
                   else {
-                      UV = Math.round(UVI);
+                      UV = Math.round(UV);
                   }
               }
               if (temperature != 0 || pressure != 0 || humidity != 0 || UV != 0) {

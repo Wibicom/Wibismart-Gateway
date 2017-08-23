@@ -741,11 +741,11 @@ function turnMicReadOn(peripheral){
       }
       else {
         thisPeripheral.micDataChar.on('data', function(data, isNotification) {
-              var voltage = parseInt(data.readUInt8(3) + "" + data.readUInt8(2) + "" + data.readUInt8(1) + "" + data.readUInt8(0), 16) * Math.pow(10, -3);
+              var voltage = parseInt(data.readUInt8(3).toString(16) + "" + data.readUInt8(2).toString(16) + "" + data.readUInt8(1).toString(16) + "" + data.readUInt8(0).toString(16), 16) * Math.pow(10, -3);
               console.log("");
               console.log("");
               console.log("voltage : " + voltage);
-              console.log(data.readUInt8(3) + " " + data.readUInt8(2) + " " + data.readUInt8(1) + " " + data.readUInt8(0));
+              console.log(data.readUInt8(3).toString(16) + " " + data.readUInt8(2).toString(16) + " " + data.readUInt8(1).toString(16) + " " + data.readUInt8(0).toString(16));
               console.log("");
               console.log("");
               var soundLevel;

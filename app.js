@@ -741,10 +741,24 @@ function turnMicReadOn(peripheral){
       }
       else {
         thisPeripheral.micDataChar.on('data', function(data, isNotification) {
-              var soundLevel = data.readUInt8(0);
+              var voltage = parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16) * Math.pow(10, -3);
+              var soundLevel;
+              if(voltage > 99 && voltage < 300) {
+                  soundLevel = 80;
+              }
+              else if (voltage >= 300 && voltage < 600) {
+                  soundLevel = 82;
+              }
+              else if (voltage >= 600) {
+                  soundLevel = 83;
+              }
+              else {
+                  soundLevel = Math.round(-0.0000035 * Math.pow(voltage, 4) + 0.0009223 * Math.pow(voltage, 3) - 0.0874859 * Math.pow(voltage, 2) + 3.6223341 * voltage + 16.4769688);
+              }
+            
               thisPeripheral.lastSoundData = soundLevel;
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Micriphone Data : { Sound level : ' + soundLevel + ' dB }');
-              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"sound","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "soundLevel" : "' + batteryLevel + '" }}');
+              deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"sound","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "soundLevel" : "' + soundLevel + '" }}');
           });
 
         thisPeripheral.micDataChar.subscribe(function(err) {

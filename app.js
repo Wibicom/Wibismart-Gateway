@@ -494,7 +494,7 @@ function connectToEnviro(peripheral) {
               console.log("[BLE] ", peripheral.advertisement.localName, " CO2 service not found");
             }
             if(thisPeripheral.gasesOnChar && thisPeripheral.gasesDataChar && thisPeripheral.gasesPeriodChar) {
-              turnGasesSensorOn(peripheral,[true, true, true, true], true);
+              turnGasesSensorOn(peripheral,[true, true, true, true, true], true);
               setPeriod(thisPeripheral.gasesPeriodChar, 100, peripheral, "gases");
             }
             else {
@@ -722,24 +722,27 @@ function turnGasesSensorOn(peripheral, config, first){
     if (thisPeripheral.gasesOnChar) {
       thisPeripheral.gasesOnChar.write(valueToSend(config) , false, function(err) {
         if (!err) {
-          thisPeripheral.SO2SensorOn = config[3];
-          thisPeripheral.COSensorOn = config[2];
-          thisPeripheral.O3SensorOn = config[1];
-          thisPeripheral.NO2SensorOn = config[0];
+          thisPeripheral.SO2SensorOn = config[4];
+          thisPeripheral.COSensorOn = config[3];
+          thisPeripheral.O3SensorOn = config[2];
+          thisPeripheral.NO2SensorOn = config[1];
+          thisPeripheral.PMSensorOn = config[0];
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Gases sensor of " + peripheral.advertisement.localName + " has changed configuration successfully!"}));
           if(first) {
             thisPeripheral.gasesDataChar.on('data', function(data, isNotification) {
-                var SO2Level = Math.round(((parseInt(data.readUInt8(7) + "" + data.readUInt8(6) + "" + data.readUInt8(5) + "" + data.readUInt8(4), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
-                var COLevel = Math.round(((parseInt(data.readUInt8(3) + "" + data.readUInt8(2) + "" + data.readUInt8(1) + "" + data.readUInt8(0), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
-                var O3Level = Math.round(((parseInt(data.readUInt8(11) + "" + data.readUInt8(10) + "" + data.readUInt8(9) + "" + data.readUInt8(8), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
-                var NO2Level = Math.round(((parseInt(data.readUInt8(15) + "" + data.readUInt8(14) + "" + data.readUInt8(13) + "" + data.readUInt8(12), 16) * Math.pow(10, -6)) - 1.25)/0.0045852);
-                if (SO2Level != 0 || COLevel != 0 || O3Level != 0 || NO2Level != 0) {
+                var PMLevel = parseInt(data.readUInt8(0).toString(16) + "" + data.readUInt8(1).toString(16) + "" + data.readUInt8(2).toString(16) + "" + data.readUInt8(3).toString(16), 16) * Math.pow(10, -6);
+                var SO2Level = parseInt(data.readUInt8(16).toString(16) + "" + data.readUInt8(17).toString(16) + "" + data.readUInt8(18).toString(16) + "" + data.readUInt8(19).toString(16), 16) * Math.pow(10, -6);
+                var COLevel = parseInt(data.readUInt8(4).toString(16) + "" + data.readUInt8(5).toString(16) + "" + data.readUInt8(6).toString(16) + "" + data.readUInt8(7).toString(16), 16) * Math.pow(10, -6);
+                var O3Level = parseInt(data.readUInt8(8).toString(16) + "" + data.readUInt8(9).toString(16) + "" + data.readUInt8(10).toString(16) + "" + data.readUInt8(11).toString(16), 16) * Math.pow(10, -6);
+                var NO2Level = parseInt(data.readUInt8(12).toString(16) + "" + data.readUInt8(13).toString(16) + "" + data.readUInt8(14).toString(16) + "" + data.readUInt8(15).toString(16), 16) * Math.pow(10, -6);
+                if (SO2Level != 0 || COLevel != 0 || O3Level != 0 || NO2Level != 0 || PMLevel != 0) {
+                  thisPeripheral.lastPMData = PMLevel;
                   thisPeripheral.lastSO2Data = SO2Level;
                   thisPeripheral.lastCOData = COLevel;
                   thisPeripheral.lastO3Data = O3Level;
                   thisPeripheral.lastNO2Data = NO2Level
-                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { SO2 : ' + SO2Level + ', CO : ' + COLevel + ', O3 : ' + O3Level + ', NO2 : ' + NO2Level + ' }');
-                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"gases","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "SO2" : "' + SO2Level + '", "CO" : "' + COLevel + '", "O3" : "' + O3Level + '", "NO2" : "' + NO2Level + '" }}');
+                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { PM : ' + PMLevel + ', SO2 : ' + SO2Level + ', CO : ' + COLevel + ', O3 : ' + O3Level + ', NO2 : ' + NO2Level + ' }');
+                  deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"gases","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "PM" : "' + PMLevel + '", "SO2" : "' + SO2Level + '", "CO" : "' + COLevel + '", "O3" : "' + O3Level + '", "NO2" : "' + NO2Level + '" }}');
                 }
                 
             });
@@ -764,25 +767,7 @@ function turnMicReadOn(peripheral){
       else {
         thisPeripheral.micDataChar.on('data', function(data, isNotification) {
               var voltage = parseInt(data.readUInt8(0).toString(16) + "" + data.readUInt8(1).toString(16) + "" + data.readUInt8(2).toString(16) + "" + data.readUInt8(3).toString(16), 16) * Math.pow(10, -3);
-              console.log("");
-              console.log("");
-              console.log("voltage : " + voltage);
-              console.log(data.readUInt8(0).toString(16) + " " + data.readUInt8(1).toString(16) + " " + data.readUInt8(2).toString(16) + " " + data.readUInt8(3).toString(16));
-              console.log("");
-              console.log("");
-              var soundLevel;
-              if(voltage > 99 && voltage < 300) {
-                  soundLevel = 80;
-              }
-              else if (voltage >= 300 && voltage < 600) {
-                  soundLevel = 82;
-              }
-              else if (voltage >= 600) {
-                  soundLevel = 83;
-              }
-              else {
-                  soundLevel = Math.round(-0.0000035 * Math.pow(voltage, 4) + 0.0009223 * Math.pow(voltage, 3) - 0.0874859 * Math.pow(voltage, 2) + 3.6223341 * voltage + 16.4769688);
-              }
+              soundLevel = Math.round(20 * Math.log10(voltage / 8) + 52);
             
               thisPeripheral.lastSoundData = soundLevel;
               console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Micriphone Data : { Sound level : ' + soundLevel + ' dB }');

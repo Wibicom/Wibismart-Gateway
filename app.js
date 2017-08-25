@@ -489,7 +489,7 @@ function connectToEnviro(peripheral) {
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Light service not found");
             }
-            console.log(thisPeripheral.CO2OnChar  == null + " " + thisPeripheral.CO2DataChar == null + " " + null == thisPeripheral.CO2PeriodChar);
+            console.log((thisPeripheral.CO2OnChar  == null) + " " + (thisPeripheral.CO2DataChar == null) + " " + null == (thisPeripheral.CO2PeriodChar));
             if(thisPeripheral.CO2OnChar && thisPeripheral.CO2DataChar && thisPeripheral.CO2PeriodChar) {
               turnCO2SensorOn(peripheral, true);
               setPeriod(thisPeripheral.CO2PeriodChar, 30, peripheral, "CO2");

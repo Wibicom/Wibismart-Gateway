@@ -741,7 +741,7 @@ function turnGasesSensorOn(peripheral, config, first){
                   thisPeripheral.lastCOData = COLevel;
                   thisPeripheral.lastO3Data = O3Level;
                   thisPeripheral.lastNO2Data = NO2Level
-                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Accelerometer Data : { PM : ' + PMLevel + ', SO2 : ' + SO2Level + ', CO : ' + COLevel + ', O3 : ' + O3Level + ', NO2 : ' + NO2Level + ' }');
+                  console.log('[BLE] ' + peripheral.advertisement['localName'] + ' -> Gases Data : { PM : ' + PMLevel + ', SO2 : ' + SO2Level + ', CO : ' + COLevel + ', O3 : ' + O3Level + ', NO2 : ' + NO2Level + ' }');
                   deviceClient.publishDeviceEvent("Enviro", peripheral.address.replace(/:/g, ''),"gases","json",'{"deviceId" : "' + peripheral.address.replace(/:/g, '') + '", "d" : { "PM" : "' + PMLevel + '", "SO2" : "' + SO2Level + '", "CO" : "' + COLevel + '", "O3" : "' + O3Level + '", "NO2" : "' + NO2Level + '" }}');
                 }
                 
@@ -750,7 +750,7 @@ function turnGasesSensorOn(peripheral, config, first){
 
           thisPeripheral.CO2DataChar.subscribe(function(err) {
                 if(!err){
-                  console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to CO2");
+                  console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to gases");
                 }
               });
         }
@@ -911,7 +911,8 @@ function valueToSend(config) { // this functio is used to determine what to send
       config[i] = 0;
     }
   }
-  var value = config[0] + ( config[1] * 2 ) + ( config[2] * 4 ) + ( config[3] * 8 );
+  var value = config[0] + ( config[1] * 2 ) + ( config[2] * 4 ) + ( config[3] * 8 ) + ( config[4] * 16);
+  console.log("Writing value " + value);
   value = '0x' + value.toString(16);
   var buf = new Buffer(1);
   buf.writeUInt8(value, 0);

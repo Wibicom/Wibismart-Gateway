@@ -722,10 +722,10 @@ function turnGasesSensorOn(peripheral, config, first){
     if (thisPeripheral.gasesOnChar) {
       thisPeripheral.gasesOnChar.write(valueToSend(config) , false, function(err) {
         if (!err) {
-          thisPeripheral.SO2SensorOn = config[4];
-          thisPeripheral.COSensorOn = config[3];
-          thisPeripheral.O3SensorOn = config[2];
-          thisPeripheral.NO2SensorOn = config[1];
+          thisPeripheral.SO2SensorOn = config[1];
+          thisPeripheral.COSensorOn = config[2];
+          thisPeripheral.O3SensorOn = config[3];
+          thisPeripheral.NO2SensorOn = config[4];
           thisPeripheral.PMSensorOn = config[0];
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Gases sensor of " + peripheral.advertisement.localName + " has changed configuration successfully!"}));
           if(first) {
@@ -912,7 +912,6 @@ function valueToSend(config) { // this functio is used to determine what to send
     }
   }
   var value = config[0] + ( config[1] * 2 ) + ( config[2] * 4 ) + ( config[3] * 8 ) + ( config[4] * 16);
-  console.log("Writing value " + value);
   value = '0x' + value.toString(16);
   var buf = new Buffer(1);
   buf.writeUInt8(value, 0);

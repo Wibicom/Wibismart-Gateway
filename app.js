@@ -425,6 +425,7 @@ function connectToEnviro(peripheral) {
               }
               else if (gasesOnCharUuid == characteristic.uuid) {
                 thisPeripheral.gasesOnChar = characteristic;
+                console.log("confiiiiiggggggg");
               }
               else if (weatherDataCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherDataChar = characteristic;
@@ -440,6 +441,7 @@ function connectToEnviro(peripheral) {
               }
               else if (gasesDataCharUuid == characteristic.uuid) {
                 thisPeripheral.gasesDataChar == characteristic;
+                console.log("dataaaaaaaaaaaa");
               }
               else if (weatherPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherPeriodChar = characteristic;
@@ -455,6 +457,7 @@ function connectToEnviro(peripheral) {
               }
               else if (gasesPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.gasesPeriodChar = characteristic;
+                console.log("perioooodddddd");
               }
               else if (micDataCharUuid == characteristic.uuid) {
                 thisPeripheral.micDataChar = characteristic;
@@ -486,6 +489,7 @@ function connectToEnviro(peripheral) {
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Light service not found");
             }
+            console.log(thisPeripheral.CO2OnChar  == null + " " + thisPeripheral.CO2DataChar == null + " " + null == thisPeripheral.CO2PeriodChar);
             if(thisPeripheral.CO2OnChar && thisPeripheral.CO2DataChar && thisPeripheral.CO2PeriodChar) {
               turnCO2SensorOn(peripheral, true);
               setPeriod(thisPeripheral.CO2PeriodChar, 30, peripheral, "CO2");

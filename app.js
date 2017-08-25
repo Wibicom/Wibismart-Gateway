@@ -442,6 +442,7 @@ function connectToEnviro(peripheral) {
               else if (gasesDataCharUuid == characteristic.uuid) {
                 thisPeripheral.gasesDataChar == characteristic;
                 console.log("dataaaaaaaaaaaa");
+                console.log(thisPeripheral.gasesDataChar);
               }
               else if (weatherPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherPeriodChar = characteristic;

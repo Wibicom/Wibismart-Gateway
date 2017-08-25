@@ -748,7 +748,7 @@ function turnGasesSensorOn(peripheral, config, first){
             });
           }
 
-          thisPeripheral.CO2DataChar.subscribe(function(err) {
+          thisPeripheral.gasesDataChar.subscribe(function(err) {
                 if(!err){
                   console.log("[BLE] ", peripheral.advertisement.localName, " Subscribed to gases");
                 }

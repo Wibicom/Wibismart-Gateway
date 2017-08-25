@@ -425,7 +425,6 @@ function connectToEnviro(peripheral) {
               }
               else if (gasesOnCharUuid == characteristic.uuid) {
                 thisPeripheral.gasesOnChar = characteristic;
-                console.log("confiiiiiggggggg");
               }
               else if (weatherDataCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherDataChar = characteristic;
@@ -440,10 +439,7 @@ function connectToEnviro(peripheral) {
                 thisPeripheral.CO2DataChar = characteristic;
               }
               else if (gasesDataCharUuid == characteristic.uuid) {
-                thisPeripheral.gasesDataChar == characteristic;
-                console.log("dataaaaaaaaaaaa");
-                console.log(thisPeripheral.gasesDataChar);
-                console.log(characteristic);
+                thisPeripheral.gasesDataChar = characteristic;
               }
               else if (weatherPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherPeriodChar = characteristic;
@@ -459,7 +455,6 @@ function connectToEnviro(peripheral) {
               }
               else if (gasesPeriodCharUuid == characteristic.uuid) {
                 thisPeripheral.gasesPeriodChar = characteristic;
-                console.log("perioooodddddd");
               }
               else if (micDataCharUuid == characteristic.uuid) {
                 thisPeripheral.micDataChar = characteristic;
@@ -491,9 +486,6 @@ function connectToEnviro(peripheral) {
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Light service not found");
             }
-            console.log("on "+(thisPeripheral.gasesOnChar  == null) );
-            console.log("data " + (thisPeripheral.gasesDataChar == null));
-            console.log("period " + (null == thisPeripheral.gasesPeriodChar));
             if(thisPeripheral.CO2OnChar && thisPeripheral.CO2DataChar && thisPeripheral.CO2PeriodChar) {
               turnCO2SensorOn(peripheral, true);
               setPeriod(thisPeripheral.CO2PeriodChar, 30, peripheral, "CO2");

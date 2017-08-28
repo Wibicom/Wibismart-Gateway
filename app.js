@@ -76,7 +76,7 @@ var onValue = new Buffer(1);
 onValue.writeUInt8(0x01, 0);
 var offValue = new Buffer(1);
 offValue.writeUInt8(0x00, 0);
-var calibValue = new Buffer(1);
+var calibValue = new Buffer(1); //this is sent to the configuration channel of the CO2 sensor to calibrate it.
 calibValue.writeUInt8(0xee);
 
 setTimeout(function() {
@@ -467,7 +467,7 @@ function connectToEnviro(peripheral) {
            // Connects to the characteristics it found
             if (thisPeripheral.weatherOnChar && thisPeripheral.weatherDataChar && thisPeripheral.weatherPeriodChar) {
               turnWeatherSensorOn(peripheral, true);
-              setPeriod(thisPeripheral.weatherPeriodChar, 30, peripheral, "weather");
+              setPeriod(thisPeripheral.weatherPeriodChar, 50, peripheral, "weather");
             }
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Weather service not found");
@@ -481,20 +481,20 @@ function connectToEnviro(peripheral) {
             }
             if (thisPeripheral.lightOnChar && thisPeripheral.lightDataChar && thisPeripheral.lightPeriodChar) {
               turnLightSensorOn(peripheral, true);
-              setPeriod(thisPeripheral.lightPeriodChar, 30, peripheral, "light");
+              setPeriod(thisPeripheral.lightPeriodChar, 50, peripheral, "light");
             }
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " Light service not found");
             }
             if(thisPeripheral.CO2OnChar && thisPeripheral.CO2DataChar && thisPeripheral.CO2PeriodChar) {
               turnCO2SensorOn(peripheral, true);
-              setPeriod(thisPeripheral.CO2PeriodChar, 30, peripheral, "CO2");
+              setPeriod(thisPeripheral.CO2PeriodChar, 50, peripheral, "CO2");
             }
             else {
               console.log("[BLE] ", peripheral.advertisement.localName, " CO2 service not found");
             }
             if(thisPeripheral.gasesOnChar && thisPeripheral.gasesDataChar && thisPeripheral.gasesPeriodChar) {
-              turnGasesSensorOn(peripheral,[true, true, true, true, true], true);
+              turnGasesSensorOn(peripheral,[true, false, false, false, false], true);
               setPeriod(thisPeripheral.gasesPeriodChar, 100, peripheral, "gases");
             }
             else {
@@ -765,6 +765,7 @@ function turnMicReadOn(peripheral){
         peripheral.disconnect();
       }
       else {
+        thisPeripheral.micSensorOn = true;
         thisPeripheral.micDataChar.on('data', function(data, isNotification) {
               var voltage = parseInt(data.readUInt8(0).toString(16) + "" + data.readUInt8(1).toString(16) + "" + data.readUInt8(2).toString(16) + "" + data.readUInt8(3).toString(16), 16) * Math.pow(10, -3);
               soundLevel = Math.round(20 * Math.log10(voltage / 8) + 52);

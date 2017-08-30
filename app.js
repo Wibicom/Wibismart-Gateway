@@ -80,7 +80,7 @@ var calibValue = new Buffer(1); //this is sent to the configuration channel of t
 calibValue.writeUInt8(0xee);
 
 setTimeout(function() {
-var mqttConfig = {
+var mqttConfig = { //these are the crednetials to connect to the IBM Watson platform.
     "org" : "4rxa4d",
     "id" : "506583dd346a",
     "domain": "internetofthings.ibmcloud.com",
@@ -110,6 +110,10 @@ if(noble.state == 'poweredOn') {
   deviceClient.connect();
 }
 
+
+/*  This event is triggered once our IBM watson client is connected.
+    In here, we subscribe to all commands that we can recieve directly from the web application and define fow to handle them.
+*/
 deviceClient.on('connect', function () {
   //publishing event using the default quality of service
 	console.log('[MQTT] Connected');
@@ -124,7 +128,7 @@ deviceClient.on('connect', function () {
     payload = payload.toString('utf8');
     payload = JSON.parse(payload);
     switch(commandName) {
-      case 'scan':
+      case 'scan': //this command is used to scan and send the discovered devices back to the user.
       currentDiscoveredDevices = [];
         noble.startScanning([], false);
         setTimeout(function() {//after 5 seconds we send back the information about the devices we discovered.
@@ -139,7 +143,7 @@ deviceClient.on('connect', function () {
           deviceClient.publishGatewayEvent("scanResponse", 'json', JSON.stringify({d:out}));
         }, 10000);
         break;
-      case 'connectTo':
+      case 'connectTo': //this command is used to connect to a specifiv device, the payload contains the name and address of the device we wish to connect to.
         var found = false;
         var alreadyConnected = false;
         for(i in connectedDevices) {
@@ -164,7 +168,7 @@ deviceClient.on('connect', function () {
           deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " you are trying to connect to is not found. Try scanning again..."}));
         }
         break;
-      case 'disconnectTo':
+      case 'disconnectTo': // this command is used to disconnect a device
         var connected = false;
         for(i in connectedDevices) {
           if (i == payload.data.deviceId) {
@@ -199,7 +203,7 @@ deviceClient.on('connect', function () {
           deviceClient.publishGatewayEvent("disconnectionResponse", 'json', JSON.stringify({message: "Something went wrong trying to disconnect the device " + payload.data.localName + ". Try again."}));
         }
         break;
-      case 'sensorToggle':
+      case 'sensorToggle': // this is the command used to turn on and off sensors, as for the CO2 channel it is also used for calibration. The payload contains the information about which sensor we want to toggle.
         var targetDevice = connectedDevices[payload.data.deviceId];
         if(targetDevice == undefined || targetDevice == null) {
            deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot toggle its sensors."}));
@@ -285,7 +289,7 @@ deviceClient.on('connect', function () {
           turnGasesSensorOn(peripheral, payload.data.value, false);
         }
         break;
-      case 'sensorPeriod':
+      case 'sensorPeriod': //this command is used to change the period of the specific sensors, the payload contains the device information as well as which sensor we want to change the period
         var targetDevice = connectedDevices[payload.data.deviceId];
         if(targetDevice == undefined || targetDevice == null) {
            deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "The device " + payload.data.localName + " is not connected, you cannot change the period of its sensors."}));
@@ -297,15 +301,15 @@ deviceClient.on('connect', function () {
         }
         peripheral = targetDevice.peripheral;
         var period = payload.data.value;
-        period = parseFloat(period)*10;//this multiplication by 10 is due to the fact that enviros have a connection period of 100ms
+        period = parseFloat(period)*10;
         var targetSensor = targetDevice[payload.data.sensor];
         if (targetSensor) {
           setPeriod(targetSensor, period, peripheral, payload.data.sensor.substring(0, payload.data.sensor.indexOf("PeriodChar")));
         }
         break;
-      case 'getter':
+      case 'getter': // this command is used to get information about the devicdes currentely connected to the gateway.
         switch(payload.data.type) {
-          case 'connectedDevices':
+          case 'connectedDevices': // this case will return a list of all local name and address of the connected devices.
             var out = [];
             for(i in connectedDevices) {
               if(connectedDevices[i] != null) {
@@ -317,7 +321,7 @@ deviceClient.on('connect', function () {
             }
             deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'connectedDevices', d: out}));
             break;
-          case 'deviceInfo':
+          case 'deviceInfo': // this will return an object containing all the information of a specific device, including what sensors are currenty on and off and each period currently set.
             var targetDevice = connectedDevices[payload.data.deviceId];
             if(targetDevice == undefined || targetDevice == null) {
               deviceClient.publishGatewayEvent("getterResponse", 'json', JSON.stringify({type: 'deviceInfo', d: {localName: payload.data.localName, deviceId: payload.data.deviceId, status: "disconnected"}}));
@@ -339,7 +343,7 @@ deviceClient.on('connect', function () {
 
 
 
-noble.on('discover', function(peripheral) {
+noble.on('discover', function(peripheral) { //Thihs event will triger every time a device is discovered
   if(naturalDisconnection[peripheral.address.replace(/:/g, '')]) {//if the device recently disconnected and is discovered, we reconnect to it
     connectToEnviro(peripheral);
   }
@@ -366,7 +370,7 @@ noble.on('discover', function(peripheral) {
 })
 
 
-function connectToEnviro(peripheral) {
+function connectToEnviro(peripheral) { //This function is used to connect to an enviro device.
   peripheral.connect(function(err) {
       if(err) {
         deviceClient.publishGatewayEvent("connectionResponse", 'json', JSON.stringify({message: "Connection to device " + peripheral.advertisement.localName + " was attempted and failed..."}));
@@ -407,9 +411,9 @@ function connectToEnviro(peripheral) {
       });
       console.log("[BLE] Looking for characteristics ...");
 
-        peripheral.discoverSomeServicesAndCharacteristics(serviceUuids, [], function(error, services, characteristics){
+        peripheral.discoverSomeServicesAndCharacteristics(serviceUuids, [], function(error, services, characteristics){ // here we discover the services and characteristics of the enviro device
 
-          characteristics.forEach(function(characteristic) {
+          characteristics.forEach(function(characteristic) { //If the uuid of the carachteristic correspond to one of the uuid defined at the top, we store this charachteristic in an object stored in the connected devices
               console.log("[BLE]  ", peripheral.advertisement.localName, " found characteristic:", characteristic.uuid);
               if (weatherOnCharUuid == characteristic.uuid) {
                 thisPeripheral.weatherOnChar = characteristic;
@@ -464,7 +468,7 @@ function connectToEnviro(peripheral) {
               }
             })
      
-           // Connects to the characteristics it found
+           // Once the we itterated through all the charachteristics, we can then turn all sensors on and set a predefined period. we however make sure that the characteristics exist before turning a sesor on.
             if (thisPeripheral.weatherOnChar && thisPeripheral.weatherDataChar && thisPeripheral.weatherPeriodChar) {
               turnWeatherSensorOn(peripheral, true);
               setPeriod(thisPeripheral.weatherPeriodChar, 50, peripheral, "weather");
@@ -531,7 +535,7 @@ function connectToEnviro(peripheral) {
     })
 }
 
-function setPeriod(char, period, peripheral, charName){
+function setPeriod(char, period, peripheral, charName){ // this fnuction takes as input a bluetooth charachteristic, a period , the peripheral which the charachteristic belongs too, and the name of the charachteristic. It is used for changinng the poeriod of a sensor.
 	  var periodBuf = new Buffer(1);
     periodBuf.writeUInt8(period, 0);
     if(char) {
@@ -559,7 +563,7 @@ function turnWeatherSensorOn(peripheral, first){ // the first variable determine
           thisPeripheral.weatherSensorOn = true;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Weather sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
           if(first) {
-            thisPeripheral.weatherDataChar.on('data', function(data, isNotification) {
+            thisPeripheral.weatherDataChar.on('data', function(data, isNotification) { //This event is triggered when we recieve a notification on this characteristic
                 
               var temperature = ((data.readUInt8(2) * 0x10000 + data.readUInt8(1) * 0x100 + data.readUInt8(0)) / 100.0).toFixed(1);
               var pressure = ((data.readUInt8(5) * 0x10000 + data.readUInt8(4) * 0x100 + data.readUInt8(3)) / 100.0).toFixed(1);
@@ -615,7 +619,7 @@ function turnAccelSensorOn(peripheral, first){
     var thisPeripheral = connectedDevices[peripheral.address.replace(/:/g, '')];
     // Turn on accelerometer sensor and subsribe to it
     if (thisPeripheral.accelOnChar) {
-      thisPeripheral.accelOnChar.write(onValue, false, function(err) {
+      thisPeripheral.accelOnChar.write(onValue, false, function(err) {//This event is triggered when we recieve a notification on this characteristic
         if (!err) {
           thisPeripheral.accelSensorOn = true;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Accelerometer of " + peripheral.advertisement.localName + " has connected successfully!"}));
@@ -683,7 +687,7 @@ function turnCO2SensorOn(peripheral, first){
           thisPeripheral.CO2SensorOn = true;
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "CO2 sensor of " + peripheral.advertisement.localName + " has connected successfully!"}));
           if(first) {
-            thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {
+            thisPeripheral.CO2DataChar.on('data', function(data, isNotification) {//This event is triggered when we recieve a notification on this characteristic
                 var CO2Level = 0;
                 if(data[0] == 0xaa && data[1] == 0xaa) {
                   console.log("CO2 calibration for " + peripheral.advertisement.localName + " done.");
@@ -729,8 +733,12 @@ function turnGasesSensorOn(peripheral, config, first){
           thisPeripheral.PMSensorOn = config[0];
           deviceClient.publishGatewayEvent("sensorToggleResponse", 'json', JSON.stringify({message: "Gases sensor of " + peripheral.advertisement.localName + " has changed configuration successfully!"}));
           if(first) {
-            thisPeripheral.gasesDataChar.on('data', function(data, isNotification) {
-                var PMLevel = parseInt(data.readUInt8(0).toString(16) + "" + data.readUInt8(1).toString(16) + "" + data.readUInt8(2).toString(16) + "" + data.readUInt8(3).toString(16), 16) * Math.pow(10, -6);
+            thisPeripheral.gasesDataChar.on('data', function(data, isNotification) {//This event is triggered when we recieve a notification on this characteristic
+                var PMLevel = ((parseInt(data.readUInt8(0).toString(16) + "" + data.readUInt8(1).toString(16) + "" + data.readUInt8(2).toString(16) + "" + data.readUInt8(3).toString(16), 16) * Math.pow(10, -6)) * 0.17 - 0.1) * 1000;
+                PMLevel = Math.round(PMLevel * 10)/10;
+                if(PMLevel < 0) {
+                  PMLevel = 0;
+                }
                 var SO2Level = parseInt(data.readUInt8(16).toString(16) + "" + data.readUInt8(17).toString(16) + "" + data.readUInt8(18).toString(16) + "" + data.readUInt8(19).toString(16), 16) * Math.pow(10, -6);
                 var COLevel = parseInt(data.readUInt8(4).toString(16) + "" + data.readUInt8(5).toString(16) + "" + data.readUInt8(6).toString(16) + "" + data.readUInt8(7).toString(16), 16) * Math.pow(10, -6);
                 var O3Level = parseInt(data.readUInt8(8).toString(16) + "" + data.readUInt8(9).toString(16) + "" + data.readUInt8(10).toString(16) + "" + data.readUInt8(11).toString(16), 16) * Math.pow(10, -6);
@@ -766,7 +774,7 @@ function turnMicReadOn(peripheral){
       }
       else {
         thisPeripheral.micSensorOn = true;
-        thisPeripheral.micDataChar.on('data', function(data, isNotification) {
+        thisPeripheral.micDataChar.on('data', function(data, isNotification) {//This event is triggered when we recieve a notification on this characteristic
               var voltage = parseInt(data.readUInt8(0).toString(16) + "" + data.readUInt8(1).toString(16) + "" + data.readUInt8(2).toString(16) + "" + data.readUInt8(3).toString(16), 16) * Math.pow(10, -3);
               soundLevel = Math.round(20 * Math.log10(voltage / 8) + 52);
             
@@ -789,7 +797,7 @@ function turnBatteryReadOn(peripheral){
         peripheral.disconnect();
       }
       else {
-        thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {
+        thisPeripheral.batteryDataChar.on('data', function(data, isNotification) {//This event is triggered when we recieve a notification on this characteristic
               var batteryLevel = data.readUInt8(0);
               var batteryLife = calculateBatteryLife(batteryLevel, thisPeripheral);
               batteryLife = Math.round(batteryLife * 100)/100; // rounds to two decimal places

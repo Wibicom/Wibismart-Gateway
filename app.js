@@ -80,14 +80,17 @@ var calibValue = new Buffer(1); //this is sent to the configuration channel of t
 calibValue.writeUInt8(0xee);
 
 setTimeout(function() {
-var mqttConfig = { //these are the crednetials to connect to the IBM Watson platform.
+var mqttConfig = { //these are the credentials to connect to the IBM Watson platform.
     "org" : "4rxa4d",
-    "id" : "506583dd346a",
+//    "id" : "506583dd346a",
+    "id" : "506583dd5c62",
     "domain": "internetofthings.ibmcloud.com",
     "type" : "BeagleBone",
     "auth-method" : "token",
-    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
+//    "auth-token" : "@M6ZAOvLtr_pQ_j@x-"
+    "auth-token" : "rGpBk2iF?tMG*PSznn"
 };
+
 
 var deviceClient = new Client.IotfGateway(mqttConfig);
 
